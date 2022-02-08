@@ -1,41 +1,35 @@
 import json
 import os
+import shutil
 import time
 from datetime import datetime, timedelta
 from uuid import uuid4
-import requests
+
 import Jetson.GPIO as GPIO
 import cv2
+import requests
 
-from utils import gstreamer_pipeline, current_milli_time
+from utils import gstreamer_pipeline, current_milli_time, motion_detection, Constants, dt_parse
 
 pir_pin = 7
 infrared = 13
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(pir_pin, GPIO.IN)
-GPIO.setup(infrared, GPIO.OUT)
-GPIO.output(infrared, GPIO.HIGH)
 
 
-class Node:
-    image_path = os.environ['HOME'] + '/images/'
+class Node(Constants):
     url = os.environ['SITE'] + '/core/api/camera/me/'
-    ME = {
-        "live": False,
-        "description": "Lums Camera",
-        "last_reported_at": datetime.now(),
-        "action": None,
-        "video_interval": 15,
-        "frames_per_sec": 30,
-        "update_after": 300.0,
-        "slots": [],
-    }
+    event_id = None
+    ME = None
 
-    def __init__(self, token):
-        self.headers = {
-            'Authorization': 'Token ' + token,
-            'Content-Type': 'application/json'
-        }
+    def __init__(self):
+        Constants.__init__(self)
+        self.update()
+
+    @staticmethod
+    def setup_sensors():
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(pir_pin, GPIO.IN)
+        GPIO.setup(infrared, GPIO.OUT)
+        GPIO.output(infrared, GPIO.HIGH)
 
     @property
     def should_capture(self):
@@ -47,23 +41,39 @@ class Node:
         return True
 
     @property
+    def should_update(self):
+        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
+            return False
+        return True
+
+    @property
     def video_interval(self):
         return self.ME['video_interval']
+
+    @property
+    def day_threshold(self):
+        return self.ME['day_threshold']
+
+    @property
+    def night_threshold(self):
+        return self.ME['night_threshold']
 
     @property
     def update_after(self):
         return self.ME['update_after']
 
     @property
+    def last_reported_at(self):
+        return dt_parse(str(self.ME['last_reported_at']))
+
+    @property
     def frames_per_sec(self):
         return self.ME['frames_per_sec']
 
     def update(self):
-        if datetime.now() < self.ME['last_reported_at'] + timedelta(seconds=self.update_after):
-            return
-
+        # hdd = psutil.disk_usage('/')
         payload = {
-            "description": "Staging Lab Node"
+            "remaining_storage": 100
         }
         response = requests.request("PATCH", self.url, headers=self.headers, data=json.dumps(payload))
         self.ME = json.loads(response.text)
@@ -72,8 +82,9 @@ class Node:
         print("started motion detect")
 
         while GPIO.input(7) == 0:
-            self.update()
-            time.sleep(0.5)
+            if self.should_update:
+                self.update()
+            time.sleep(0.5)  # why is this line here. Do we need to make it wait?
 
         print("motion detected")
 
@@ -82,24 +93,24 @@ class Node:
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
         if cap.isOpened():
-            event_id = uuid4().hex
+            self.event_id = uuid4().hex
 
-            if not os.path.exists(self.image_path + event_id):
-                os.makedirs(self.image_path + event_id)
+            if not os.path.exists(self.events_dir + self.event_id):
+                os.makedirs(self.events_dir + self.event_id)
 
-            print("Starting capture")
+            print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
 
             for skip in range(35):  # to discard over exposure frames
                 _ = cap.read()
 
             for sec in range(self.video_interval):  # change for number of pictures
                 ret_val, frame = cap.read()
-                cv2.imwrite(self.image_path + event_id + '/' + str(current_milli_time()) + '.jpg', frame)
+                cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
 
                 for skip in range(self.frames_per_sec - 1):
                     _ = cap.read()
 
-            print("done capturing")
+            print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
             GPIO.output(infrared, GPIO.HIGH)
         else:
@@ -107,18 +118,28 @@ class Node:
 
     def run(self):
         while True:
+            self.setup_sensors()
             self.detect_motion()
 
             if self.should_capture:
                 self.capture()
 
             GPIO.cleanup()
+            self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
 
+    def validate_event(self):
+        event_path = os.path.join(self.events_dir, self.event_id)
+        images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
 
-node = Node(token=os.environ['TOKEN'])
+        if True:  # check if the its' day light.
+            return motion_detection(images, movement_threshold=self.day_threshold)
+
+        return motion_detection(images, movement_threshold=self.night_threshold)
+
+    def move_event(self, to_dir):
+        event_path = os.path.join(self.events_dir, self.event_id)
+        shutil.move(event_path, to_dir)
 
 
 if __name__ == "__main__":
-    print("Initializing")
-    node.run()
-
+    Node().run()
