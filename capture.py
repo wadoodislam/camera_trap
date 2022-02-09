@@ -86,8 +86,8 @@ class Node(Constants):
             if self.should_capture:
                 self.capture()
 
-            GPIO.cleanup()
-            self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
+                GPIO.cleanup()
+                self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
 
     def validate_event(self):
         event_path = os.path.join(self.events_dir, self.event_id)
