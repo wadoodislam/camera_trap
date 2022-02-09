@@ -33,7 +33,7 @@ def gstreamer_pipeline(capture_width=640, capture_height=480, display_width=640,
 
 
 def dt_parse(t):
-    ret = datetime.strptime(t[:-6], '%Y-%m-%dT%H:%M:%S.%f')
+    ret = datetime.strptime(t[:19], '%Y-%m-%dT%H:%M:%S')
     # if t[-6] == '+':
     #     ret += timedelta(hours=int(t[-5:-3]), minutes=int(t[-2:]))
     # elif t[-6] == '-':
@@ -220,7 +220,7 @@ class Constants:
         return self.ME['frames_per_sec']
 
     def update(self):
-        payload = {"remaining_storage": self.get_disk_usage()}
+        payload = {"remaining_storage": self.get_disk_usage(), 'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}
         response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload))
         self.ME = json.loads(response.text)
 
