@@ -32,7 +32,11 @@ class UploadManager(Constants):
         return True
 
     def run(self):
+        print("checking for uploads...")
         while True:
+            if self.should_update():
+                self.update()
+
             events = os.listdir(self.upload_dir)
             if not events:
                 time.sleep(1)

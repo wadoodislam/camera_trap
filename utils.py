@@ -1,11 +1,14 @@
+import json
 import math
 import os
+import smbus
 import time
-
+import psutil
 import cv2
 import numpy as np
 from datetime import datetime, timedelta
 
+import requests
 
 
 def gstreamer_pipeline(capture_width=640, capture_height=480, display_width=640, display_height=480, framerate=30, flip_method=2):
@@ -122,6 +125,20 @@ class ImageOperations:
         return change
 
 
+bus = smbus.SMBus(1)
+
+
+def is_day_light():
+    DEVICE, ONE_TIME_HIGH_RES_MODE_1 = 0x23, 0x20
+    light = None
+
+    for i in range(3):
+        data = bus.read_i2c_block_data(DEVICE, ONE_TIME_HIGH_RES_MODE_1)
+        light = (data[1] + (256 * data[0])) / 1.2
+
+    return light > 500
+
+
 def motion_detection(image_paths, target_mask_path=None, show=True, movement_threshold=1000, max_movement_threshold=3000):
     starting_index = 1
     first_frame = cv2.imread(image_paths[0])
@@ -134,9 +151,9 @@ def motion_detection(image_paths, target_mask_path=None, show=True, movement_thr
         cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         for cnt in cnts:
+            print("Motion Frame: ", image_index)
+            print("Contour Area: ", cv2.contourArea(cnt))
             if movement_threshold < cv2.contourArea(cnt):
-                print("Motion Frame: ", image_index)
-                print("Contour Area: ", cv2.contourArea(cnt))
                 return True
 
     return False
@@ -148,7 +165,8 @@ class Constants:
     temp_dir = os.environ['HOME'] + '/temp/'
     false_dir = os.environ['HOME'] + '/false/'
     done_dir = os.environ['HOME'] + '/done/'
-    url = None
+    me_url = os.environ['SITE'] + '/core/api/camera/me/'
+    ME = None
 
     headers = {
         'Authorization': 'Token ' + os.environ['TOKEN'],
@@ -169,3 +187,45 @@ class Constants:
             os.makedirs(self.false_dir)
         if not os.path.exists(self.done_dir):
             os.makedirs(self.done_dir)
+        self.update()
+
+    @property
+    def should_update(self):
+        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
+            return False
+        return True
+
+    @property
+    def video_interval(self):
+        return self.ME['video_interval']
+
+    @property
+    def day_threshold(self):
+        return self.ME['day_threshold']
+
+    @property
+    def night_threshold(self):
+        return self.ME['night_threshold']
+
+    @property
+    def update_after(self):
+        return self.ME['update_after']
+
+    @property
+    def last_reported_at(self):
+        return dt_parse(str(self.ME['last_reported_at']))
+
+    @property
+    def frames_per_sec(self):
+        return self.ME['frames_per_sec']
+
+    def update(self):
+        payload = {"remaining_storage": self.get_disk_usage()}
+        response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload))
+        self.ME = json.loads(response.text)
+
+    def get_disk_usage(self):
+        disk = psutil.disk_usage('/')
+        # print (obj_Disk.total / (1024.0 ** 3))
+        # print (obj_Disk.used / (1024.0 ** 3))
+        return round(disk.free / (1024.0 ** 3), 3)

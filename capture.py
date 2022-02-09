@@ -1,82 +1,41 @@
-import json
 import os
 import shutil
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 
 import Jetson.GPIO as GPIO
 import cv2
-import requests
 
-from utils import gstreamer_pipeline, current_milli_time, motion_detection, Constants, dt_parse
-
-pir_pin = 7
-infrared = 13
+from utils import gstreamer_pipeline, current_milli_time, motion_detection, Constants, is_day_light
 
 
 class Node(Constants):
-    url = os.environ['SITE'] + '/core/api/camera/me/'
     event_id = None
-    ME = None
+    pir_pin = 7
+    infrared = 12
+    led_pin = 23
+    gnd_pin = 24
+    red_pin = 16
+    green_pin = 22
+    yellow_pin = 18
 
-    def __init__(self):
-        Constants.__init__(self)
-        self.update()
-
-    @staticmethod
-    def setup_sensors():
+    def setup_sensors(self):
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(pir_pin, GPIO.IN)
-        GPIO.setup(infrared, GPIO.OUT)
-        GPIO.output(infrared, GPIO.HIGH)
+        GPIO.setup(self.pir_pin, GPIO.IN)
+        GPIO.setup(self.infrared, GPIO.OUT)
+        GPIO.setup(self.led_pin, GPIO.OUT)
+        GPIO.setup(self.gnd_pin, GPIO.OUT)
+        GPIO.setup(self.red_pin, GPIO.OUT)
+        GPIO.setup(self.yellow_pin, GPIO.OUT)
+        GPIO.setup(self.green_pin, GPIO.OUT)
+        self.night_vision(on=False)
 
     @property
     def should_capture(self):
         if not self.ME['live']:
             return False
-
-        # if time not in slots:
-        #  return False
         return True
-
-    @property
-    def should_update(self):
-        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
-            return False
-        return True
-
-    @property
-    def video_interval(self):
-        return self.ME['video_interval']
-
-    @property
-    def day_threshold(self):
-        return self.ME['day_threshold']
-
-    @property
-    def night_threshold(self):
-        return self.ME['night_threshold']
-
-    @property
-    def update_after(self):
-        return self.ME['update_after']
-
-    @property
-    def last_reported_at(self):
-        return dt_parse(str(self.ME['last_reported_at']))
-
-    @property
-    def frames_per_sec(self):
-        return self.ME['frames_per_sec']
-
-    def update(self):
-        # hdd = psutil.disk_usage('/')
-        payload = {
-            "remaining_storage": 100
-        }
-        response = requests.request("PATCH", self.url, headers=self.headers, data=json.dumps(payload))
-        self.ME = json.loads(response.text)
 
     def detect_motion(self):
         print("started motion detect")
@@ -84,15 +43,18 @@ class Node(Constants):
         while GPIO.input(7) == 0:
             if self.should_update:
                 self.update()
-            time.sleep(0.5)  # why is this line here. Do we need to make it wait?
+            time.sleep(0.5)
 
         print("motion detected")
 
     def capture(self):
-        GPIO.output(infrared, GPIO.LOW)
+
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
         if cap.isOpened():
+            if not is_day_light():
+                self.night_vision(on=True)
+
             self.event_id = uuid4().hex
 
             if not os.path.exists(self.events_dir + self.event_id):
@@ -112,7 +74,7 @@ class Node(Constants):
 
             print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
-            GPIO.output(infrared, GPIO.HIGH)
+            self.night_vision(on=False)
         else:
             print("Unable to open camera")
 
@@ -131,7 +93,7 @@ class Node(Constants):
         event_path = os.path.join(self.events_dir, self.event_id)
         images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
 
-        if True:  # check if the its' day light.
+        if is_day_light():
             return motion_detection(images, movement_threshold=self.day_threshold)
 
         return motion_detection(images, movement_threshold=self.night_threshold)
@@ -139,6 +101,34 @@ class Node(Constants):
     def move_event(self, to_dir):
         event_path = os.path.join(self.events_dir, self.event_id)
         shutil.move(event_path, to_dir)
+
+    def night_vision(self, on):
+        if on:
+            GPIO.output(self.infrared, GPIO.HIGH)
+            GPIO.output(self.led_pin, GPIO.LOW)
+            GPIO.output(self.gnd_pin, GPIO.HIGH)
+        else:
+            GPIO.output(self.infrared, GPIO.LOW)
+            GPIO.output(self.led_pin, GPIO.HIGH)
+            GPIO.output(self.gnd_pin, GPIO.LOW)
+
+    def green_on(self):
+        GPIO.output(self.green_pin, GPIO.HIGH)
+
+    def yellow_on(self):
+        GPIO.output(self.yellow_pin, GPIO.HIGH)
+
+    def red_on(self):
+        GPIO.output(self.red_pin, GPIO.HIGH)
+
+    def green_off(self):
+        GPIO.output(self.green_pin, GPIO.LOW)
+
+    def yellow_off(self):
+        GPIO.output(self.yellow_pin, GPIO.LOW)
+
+    def red_off(self):
+        GPIO.output(self.red_pin, GPIO.LOW)
 
 
 if __name__ == "__main__":
