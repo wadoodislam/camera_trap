@@ -88,6 +88,8 @@ class Node(Constants):
 
                 GPIO.cleanup()
                 self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
+            else:
+                time.sleep(self.video_interval)
 
     def validate_event(self):
         event_path = os.path.join(self.events_dir, self.event_id)
