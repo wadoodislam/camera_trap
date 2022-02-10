@@ -6,8 +6,9 @@ from uuid import uuid4
 
 import Jetson.GPIO as GPIO
 import cv2
+import requests
 
-from utils import gstreamer_pipeline, current_milli_time, motion_detection, Constants, is_day_light
+from utils import gstreamer_pipeline, current_milli_time, Constants, is_day_light, ImageOperations
 
 
 class Node(Constants):
@@ -96,9 +97,9 @@ class Node(Constants):
         images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
 
         if is_day_light():
-            return motion_detection(images, movement_threshold=self.day_threshold)
+            return self.motion_detection(images, movement_threshold=self.day_threshold)
 
-        return motion_detection(images, movement_threshold=self.night_threshold)
+        return self.motion_detection(images, movement_threshold=self.night_threshold)
 
     def move_event(self, to_dir):
         event_path = os.path.join(self.events_dir, self.event_id)
@@ -131,6 +132,32 @@ class Node(Constants):
 
     def red_off(self):
         GPIO.output(self.red_pin, GPIO.LOW)
+
+    def motion_detection(self, image_paths, movement_threshold=1000, max_movement_threshold=3000):
+        starting_index = 1
+        first_frame = cv2.imread(image_paths[0])
+
+        for image_index in range(starting_index, len(image_paths)):
+            image_2 = cv2.imread(image_paths[image_index])
+            diff = ImageOperations.error_image_gray(first_frame, image_2)
+            diff = ImageOperations.convert_to_binary(diff)
+            diff = cv2.dilate(diff, None, iterations=2)
+            cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            now = datetime.now().strftime('%H:%M:%S')
+            contours = [cv2.contourArea(cnt) for cnt in cnts]
+            max_contour = max(contours)
+            print("Motion Frame: ", image_index)
+            print("Contour Areas: ", contours)
+
+            if movement_threshold < max_contour:
+                log = {
+                    'message': 'time: {}, index: {}, contour:{}'.format(now, image_index, max_contour)
+                }
+                requests.post(self.logs_url, headers=self.headers, data=log)
+                return True
+
+        return False
 
 
 if __name__ == "__main__":

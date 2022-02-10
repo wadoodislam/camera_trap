@@ -139,26 +139,6 @@ def is_day_light():
     return light > 500
 
 
-def motion_detection(image_paths, target_mask_path=None, show=True, movement_threshold=1000, max_movement_threshold=3000):
-    starting_index = 1
-    first_frame = cv2.imread(image_paths[0])
-
-    for image_index in range(starting_index, len(image_paths)):
-        image_2 = cv2.imread(image_paths[image_index])
-        diff = ImageOperations.error_image_gray(first_frame, image_2)
-        diff = ImageOperations.convert_to_binary(diff)
-        diff = cv2.dilate(diff, None, iterations=2)
-        cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        for cnt in cnts:
-            print("Motion Frame: ", image_index)
-            print("Contour Area: ", cv2.contourArea(cnt))
-            if movement_threshold < cv2.contourArea(cnt):
-                return True
-
-    return False
-
-
 class Constants:
     events_dir = os.environ['HOME'] + '/events/'
     upload_dir = os.environ['HOME'] + '/uploads/'
@@ -166,6 +146,8 @@ class Constants:
     false_dir = os.environ['HOME'] + '/false/'
     done_dir = os.environ['HOME'] + '/done/'
     me_url = os.environ['SITE'] + '/core/api/camera/me/'
+    logs_url = os.environ['SITE'] + '/core/api/logs/'
+    image_url = os.environ['SITE'] + '/core/api/image/'
     ME = None
 
     headers = {

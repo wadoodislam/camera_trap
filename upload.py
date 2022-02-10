@@ -9,8 +9,6 @@ from utils import Constants
 
 
 class UploadManager(Constants):
-    image_url = os.environ['SITE'] + '/core/api/image/'
-    logs_url = os.environ['SITE'] + '/core/api/logs/'
 
     def send_image(self, event, item, width=500, height=375):
         item_path = os.path.join(self.upload_dir, event, item)
