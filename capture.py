@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import time
@@ -164,7 +165,7 @@ class Node(Constants):
                 log = {
                     'message': 'time: {}, index: {}, max contour:{}'.format(now, image_index, max_contour)
                 }
-                requests.post(self.logs_url, headers=self.headers, data=log)
+                requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
                 return True
 
         print("Event ID: {}, Contour Areas: {}".format(self.event_id, max_contours))
