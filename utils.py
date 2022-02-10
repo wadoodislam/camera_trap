@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 import requests
 
 
-def gstreamer_pipeline(capture_width=640, capture_height=480, display_width=640, display_height=480, framerate=30, flip_method=2):
+# def gstreamer_pipeline(capture_width=640, capture_height=480, display_width=640, display_height=480, framerate=30, flip_method=2):
+def gstreamer_pipeline(capture_width=3280, capture_height=2464, display_width=640, display_height=480, framerate=30, flip_method=2):
     return (
             "nvarguscamerasrc ! "
             "video/x-raw(memory:NVMM), "

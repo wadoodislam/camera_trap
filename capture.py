@@ -74,6 +74,10 @@ class Node(Constants):
 
             for sec in range(self.video_interval):  # change for number of pictures
                 ret_val, frame = cap.read()
+
+                if not is_day_light():
+                    frame = ImageOperations.convert_image_to_gray(frame)
+
                 cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
 
                 for skip in range(self.frames_per_sec - 1):
