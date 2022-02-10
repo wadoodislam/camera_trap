@@ -41,16 +41,22 @@ class Node(Constants):
     def detect_motion(self):
         print("started motion detect")
 
-        while GPIO.input(7) == 0:
-            if self.should_update:
-                self.update()
-            time.sleep(0.5)
+        flag = False
+        while not flag:
+            while GPIO.input(7) == 0:
+                if self.should_update:
+                    self.update()
+                time.sleep(0.5)
+            time.sleep(3)
+
+            if GPIO.input(7) != 0:
+                flag = True
 
         print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
     def capture(self):
 
-        cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
+        cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
         if cap.isOpened():
             if not is_day_light():
@@ -147,8 +153,7 @@ class Node(Constants):
             now = datetime.now().strftime('%H:%M:%S')
             contours = [cv2.contourArea(cnt) for cnt in cnts]
             max_contour = max(contours)
-            print("Motion Frame: ", image_index)
-            print("Contour Areas: ", contours)
+            print("Motion Frame: {}, Contour Areas: {}".format(image_index, max_contour))
 
             if movement_threshold < max_contour:
                 log = {
