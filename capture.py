@@ -14,8 +14,8 @@ class Node(Constants):
     event_id = None
     pir_pin = 7
     infrared = 12
-    led_pin = 23
-    gnd_pin = 24
+    led_pin = 24
+    gnd_pin = 23
     red_pin = 16
     green_pin = 22
     yellow_pin = 18
