@@ -142,6 +142,7 @@ class Node(Constants):
     def motion_detection(self, image_paths, movement_threshold=1000, max_movement_threshold=3000):
         starting_index = 1
         first_frame = cv2.imread(image_paths[0])
+        max_contours = []
 
         for image_index in range(starting_index, len(image_paths)):
             image_2 = cv2.imread(image_paths[image_index])
@@ -153,15 +154,16 @@ class Node(Constants):
             now = datetime.now().strftime('%H:%M:%S')
             contours = [cv2.contourArea(cnt) for cnt in cnts]
             max_contour = max(contours)
-            print("Motion Frame: {}, Contour Areas: {}".format(image_index, max_contour))
+            max_contours.append(max_contour)
 
             if movement_threshold < max_contour:
                 log = {
-                    'message': 'time: {}, index: {}, contour:{}'.format(now, image_index, max_contour)
+                    'message': 'time: {}, index: {}, max contour:{}'.format(now, image_index, max_contour)
                 }
                 requests.post(self.logs_url, headers=self.headers, data=log)
                 return True
 
+        print("Event ID: {}, Contour Areas: {}".format(self.event_id, max_contours))
         return False
 
 
