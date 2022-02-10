@@ -45,7 +45,7 @@ class Node(Constants):
                 self.update()
             time.sleep(0.5)
 
-        print("motion detected")
+        print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
     def capture(self):
 
