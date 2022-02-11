@@ -156,7 +156,6 @@ class Node(Constants):
             diff = cv2.dilate(diff, None, iterations=2)
             cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            now = datetime.now().strftime('%H:%M:%S')
             contours = [cv2.contourArea(cnt) for cnt in cnts]
             max_contour = max(contours)
             max_contours.append(max_contour)

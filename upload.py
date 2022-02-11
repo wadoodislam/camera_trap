@@ -23,12 +23,12 @@ class UploadManager(Constants):
         files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
         try:
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
+            file_name_t = datetime.fromtimestamp(float(item[:-4])/1000)
             if response.status_code != 201:
-                log = {'message': 'Upload failed for Event "{}" & Item: "{}" with Status: {}'.format(event, item, response.status_code)}
+                log = {'message': 'Upload failed for Event "{}" & Image Time: "{}" with Status: {}'.format(event, file_name_t, response.status_code)}
                 requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
                 return False
-            log = {'message': 'Upload success for Event "{}" & Item: "{}" with Status: {}'.format(event, item,
-                                                                                                  response.status_code)}
+            log = {'message': 'Upload success for Event "{}" & Image Time: "{}" with Status: {}'.format(event, file_name_t, response.status_code)}
             requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
         except Exception as e:
             return False
