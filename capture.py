@@ -42,13 +42,13 @@ class Node(Constants):
     def detect_motion(self):
         print("started motion detect")
 
-        flag = False
+        flag = True
         while not flag:
             while GPIO.input(7) == 0:
                 if self.should_update:
                     self.update()
                 time.sleep(0.5)
-            time.sleep(2)
+            # time.sleep(2)
 
             if GPIO.input(7) != 0:
                 flag = True
