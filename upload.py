@@ -12,7 +12,7 @@ from utils import Constants
 
 class UploadManager(Constants):
 
-    def send_image(self, event, item, width=500, height=375):
+    def send_image(self, event, item, width=340, height=220):
         item_path = os.path.join(self.upload_dir, event, item)
         im = Image.open(item_path)
         temp_item_path = os.path.join(self.temp_dir, item)
