@@ -163,7 +163,7 @@ class Node(Constants):
 
             if movement_threshold < max_contour:
                 log = {
-                    'message': 'time: {}, index: {}, max contour:{}'.format(now, image_index, max_contour)
+                    'message': 'Event: {}, index: {}, max contour:{}'.format(self.event_id, image_index, max_contour)
                 }
                 requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
                 return True
