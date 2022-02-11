@@ -48,7 +48,7 @@ class Node(Constants):
                 if self.should_update:
                     self.update()
                 time.sleep(0.5)
-            time.sleep(1)
+            time.sleep(2)
 
             if GPIO.input(7) != 0:
                 flag = True
