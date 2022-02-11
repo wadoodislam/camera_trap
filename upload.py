@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import time
@@ -23,7 +24,7 @@ class UploadManager(Constants):
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
             if response.status_code != 201:
                 log = {'message': 'Upload failed for Event "{}" & Item: "{}" with Status: {}'.format(event, item, response.status_code)}
-                requests.post(self.logs_url, headers=self.headers, data=log)
+                requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
                 return False
         except Exception as e:
             return False

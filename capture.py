@@ -48,7 +48,7 @@ class Node(Constants):
                 if self.should_update:
                     self.update()
                 time.sleep(0.5)
-            time.sleep(3)
+            time.sleep(2)
 
             if GPIO.input(7) != 0:
                 flag = True
@@ -169,6 +169,10 @@ class Node(Constants):
                 return True
 
         print("Event ID: {}, Contour Areas: {}".format(self.event_id, max_contours))
+        log = {
+            'message': 'Event: {}, max contours:{}'.format(self.event_id, max_contours)
+        }
+        requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
         return False
 
 
