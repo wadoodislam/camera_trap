@@ -26,6 +26,9 @@ class UploadManager(Constants):
                 log = {'message': 'Upload failed for Event "{}" & Item: "{}" with Status: {}'.format(event, item, response.status_code)}
                 requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
                 return False
+            log = {'message': 'Upload success for Event "{}" & Item: "{}" with Status: {}'.format(event, item,
+                                                                                                  response.status_code)}
+            requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
         except Exception as e:
             return False
         return True
