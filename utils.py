@@ -30,7 +30,7 @@ import requests
 #                 display_height,
 #             )
 #     )
-def gstreamer_pipeline(capture_width=1920, capture_height=1080,
+def gstreamer_pipeline(capture_width=1280, capture_height=720,
     display_width=960,
     display_height=540,
     framerate=30,
