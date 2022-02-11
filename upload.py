@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import time
+from datetime import datetime
 
 import requests
 from PIL import Image
@@ -34,10 +35,11 @@ class UploadManager(Constants):
         return True
 
     def run(self):
-        print("checking for uploads...")
+        print('checking for uploads...')
         while True:
             if self.should_update:
                 self.update()
+                print('Updated from dashboard at: {}'.format(datetime.now()))
 
             events = os.listdir(self.upload_dir)
             if not events:
