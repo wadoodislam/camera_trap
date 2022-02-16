@@ -12,7 +12,7 @@ from utils import Constants
 
 class UploadManager(Constants):
 
-    def send_image(self, event, item, width=340, height=220):
+    def send_image(self, event, item, width, height):
         item_path = os.path.join(self.upload_dir, event, item)
         im = Image.open(item_path)
         temp_item_path = os.path.join(self.temp_dir, item)
@@ -49,7 +49,7 @@ class UploadManager(Constants):
                 items = os.listdir(os.path.join(self.upload_dir, event))
                 if items:
                     item = items[0]
-                    self.send_image(event, item, width=500, height=375)
+                    self.send_image(event, item, width=340, height=220)
                     self.move_to_done(event, item)
                 else:
                     shutil.rmtree(os.path.join(self.upload_dir, event))
