@@ -148,13 +148,20 @@ class Node(Constants):
 
         for image_index in range(starting_index, len(image_paths)):
             image_2 = cv2.imread(image_paths[image_index])
+            #diff = ImageOperations.error_image_gray(first_frame, image_2)
+            diff = ImageOperations.error_image_gray_histmatch(first_frame, image_2)            
             diff = ImageOperations.error_image_gray(first_frame, image_2)
             diff = ImageOperations.convert_to_binary(diff)
-            diff = cv2.dilate(diff, None, iterations=2)
+            diff = cv2.erode(diff, None, iterations=1)
+            diff = cv2.dilate(diff, None, iterations=3)
             cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            contours = [cv2.contourArea(cnt) for cnt in cnts]
-            max_contour = max(contours)
+            if len(cnts) > 0:
+              contours = [cv2.contourArea(cnt) for cnt in cnts]
+              max_contour = max(contours)              
+            else:
+              max_contour = 0
+
             max_contours.append(max_contour)
 
             if movement_threshold < max_contour:
