@@ -4,6 +4,8 @@ import os
 import smbus
 import time
 import psutil
+from skimage import exposure
+from skimage.exposure import match_histograms
 import cv2
 import numpy as np
 from datetime import datetime, timedelta
@@ -102,6 +104,19 @@ class ImageOperations:
         if invert:
             _result = 255 - _result
         return _result
+
+    @staticmethod
+    def error_image_gray_histmatch(im1, im2, invert=False):
+        im1_gray = ImageOperations.convert_image_to_gray(im1)
+        im2_gray = ImageOperations.convert_image_to_gray(im2)
+        
+        im2_gray = match_histograms(im2_gray, im1_gray, multichannel=False)
+        _result = cv2.absdiff(im1_gray, im2_gray.astype(np.uint8))
+        _result = cv2.normalize(_result, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        if invert:
+            _result = 255 - _result
+        return _result 
+
 
     @staticmethod
     def gamma_correction(image):
