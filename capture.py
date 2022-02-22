@@ -40,7 +40,8 @@ class Node(Constants):
         return True
 
     def detect_motion(self):
-        print("started motion detect")
+        print("started motion detect")        
+        start_time = time.time()
 
         # flag = False
         # while not flag:
@@ -48,6 +49,9 @@ class Node(Constants):
             if self.should_update:
                 self.update()
             time.sleep(0.5)
+            if time.time() - start_time >= 15: #Ideally use self.capture_interval
+                break
+
             # time.sleep(2)
 
             # if GPIO.input(7) != 0:
@@ -91,6 +95,7 @@ class Node(Constants):
         while True:
             self.setup_sensors()
             self.detect_motion()
+
 
             if self.should_capture:
                 self.capture()

@@ -4,8 +4,8 @@ import os
 import smbus
 import time
 import psutil
-from skimage import exposure
-from skimage.exposure import match_histograms
+#from skimage import exposure
+#from skimage.exposure import match_histograms
 import cv2
 import numpy as np
 from datetime import datetime, timedelta
@@ -110,13 +110,71 @@ class ImageOperations:
         im1_gray = ImageOperations.convert_image_to_gray(im1)
         im2_gray = ImageOperations.convert_image_to_gray(im2)
         
-        im2_gray = match_histograms(im2_gray, im1_gray, multichannel=False)
+        im2_gray = ImageOperations.match_histograms(im2_gray, im1_gray, multichannel=False)
         _result = cv2.absdiff(im1_gray, im2_gray.astype(np.uint8))
         _result = cv2.normalize(_result, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         if invert:
             _result = 255 - _result
         return _result 
 
+    @staticmethod
+    def match_histograms(src_image, ref_image):
+        """
+        This implementation is 3x slower than that of scikit image
+        This method matches the source image histogram to the
+        reference signal
+        :param image src_image: The original source image
+        :param image  ref_image: The reference image
+        :return: image_after_matching
+        :rtype: image (array)
+        """
+  
+
+        # Compute the histograms separately
+        # The flatten() Numpy method returns a copy of the array c
+        # collapsed into one dimension.
+        src_hist, bin_0 = np.histogram(src_image.flatten(), 256, [0,256])
+        ref_hist, bin_3 = np.histogram(ref_image.flatten(), 256, [0,256])    
+        
+        # Compute the normalized cdf for the source and reference image
+        # Get the cumulative sum of the elements
+        src_cdf = src_hist.cumsum()
+        ref_cdf = ref_hist.cumsum()
+ 
+        # Normalize the cdf
+        src_cdf = src_cdf / float(src_cdf.max())
+        ref_cdf = ref_cdf / float(ref_cdf.max())
+        
+        # Make a separate lookup table for each color
+        lookup_table = ImageOperations.calculate_lookup(src_cdf, ref_cdf)
+        
+        # Use the lookup function to transform the colors of the original
+        # source image
+        image_after_matching = cv2.LUT(src_image, lookup_table)
+        
+        #image_after_matching = cv2.convertScaleAbs(image_after_matching)
+    
+        return image_after_matching
+
+    @staticmethod
+    def calculate_lookup(src_cdf, ref_cdf):
+        """
+        This method creates the lookup table
+        :param array src_cdf: The cdf for the source image
+        :param array ref_cdf: The cdf for the reference image
+        :return: lookup_table: The lookup table
+        :rtype: array
+        """
+        lookup_table = np.zeros(256)
+        lookup_val = 0
+        for src_pixel_val in range(len(src_cdf)):
+            lookup_val
+            for ref_pixel_val in range(len(ref_cdf)):
+                if ref_cdf[ref_pixel_val] >= src_cdf[src_pixel_val]:
+                    lookup_val = ref_pixel_val
+                    break
+            lookup_table[src_pixel_val] = lookup_val
+        return lookup_table
 
     @staticmethod
     def gamma_correction(image):
@@ -217,6 +275,10 @@ class Constants:
     @property
     def video_interval(self):
         return self.ME['video_interval']
+
+    #@property
+    #def capture_interval(self):
+    #    return self.ME['capture_interval']        
 
     @property
     def day_threshold(self):
