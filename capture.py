@@ -40,7 +40,7 @@ class Node(Constants):
         return True
 
     def detect_motion(self):
-        print("started motion detect")        
+        #print("started motion detect")        
         start_time = time.time()
 
         # flag = False
@@ -57,7 +57,7 @@ class Node(Constants):
             # if GPIO.input(7) != 0:
             #     flag = True
 
-        print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
+        #print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
     def capture(self):
 
@@ -72,7 +72,7 @@ class Node(Constants):
             if not os.path.exists(self.events_dir + self.event_id):
                 os.makedirs(self.events_dir + self.event_id)
 
-            print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
+            #print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
 
             for skip in range(35):  # to discard over exposure frames
                 _ = cap.read()
@@ -85,11 +85,11 @@ class Node(Constants):
                 for skip in range(self.frames_per_sec - 1):
                     _ = cap.read()
 
-            print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
+            #print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
             self.night_vision(on=False)
         else:
-            print("Unable to open camera")
+            print("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
 
     def run(self):
         while True:
