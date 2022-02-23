@@ -44,6 +44,7 @@ class Node(Constants):
 
     @property
     def should_capture(self):
+        return True
         if not self.ME['live']:
             return False
         return True
