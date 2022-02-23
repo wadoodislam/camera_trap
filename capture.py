@@ -108,7 +108,7 @@ class Node(Constants):
     def run(self):
         while True:
             self.setup_sensors()
-            self.detect_motion()
+            #self.detect_motion()
 
 
             if self.should_capture:
@@ -117,8 +117,10 @@ class Node(Constants):
                 if self.validate_event(): # something is happening then do a full event capture
                     #self.move_event(self.trap_dir) # we should move this trap event to some other folder
                     self.capture(self.video_interval, True)
+                    print("l1")
                 else:
                     self.move_event(self.temp_dir) # we can eliminate the additional validation and save some power
+                    print("l2")
 
                 GPIO.cleanup()
                 #self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
