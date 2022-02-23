@@ -27,7 +27,7 @@ GPIO.setup(led_pin, GPIO.OUT)
 GPIO.setup(gnd_pin, GPIO.OUT)
 GPIO.setup(red_pin, GPIO.OUT)
 GPIO.setup(yellow_pin, GPIO.OUT)
-GPIO.setup(.green_pin, GPIO.OUT)
+GPIO.setup(green_pin, GPIO.OUT)
 
 class Node(Constants):
     event_id = None
