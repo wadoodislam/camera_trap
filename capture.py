@@ -67,7 +67,7 @@ class Node(Constants):
             # if GPIO.input(7) != 0:
             #     flag = True
 
-        print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
+        #print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
     def capture(self, interval, continue_event = False):
 
