@@ -75,7 +75,7 @@ class Node(Constants):
             if not is_day_light():
                 self.night_vision(on=True)
 
-            if  !continue_event:
+            if  not continue_event:
                 self.event_id = uuid4().hex
 
             if not os.path.exists(self.events_dir + self.event_id):
