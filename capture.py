@@ -123,7 +123,7 @@ class Node(Constants):
                     self.move_event(self.temp_dir) # we can eliminate the additional validation and save some power
                     print("l2")
 
-                GPIO.cleanup()
+                #GPIO.cleanup()
                 #self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
                  # we can eliminate the additional validation and save some power
             else:
