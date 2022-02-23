@@ -38,24 +38,19 @@ def gstreamer_pipeline(capture_width=1280, capture_height=720,
     framerate=30,
     flip_method=0,
     GST_DEBUG=2,
-)
-    # return (
-    #     "GST_DEBUG=2,"
-    #     "nvarguscamerasrc !"
-    #     "video/x-raw(memory:NVMM), width=(int)%d, height=(int)%d, framerate=(fraction)%d/1 ! "
-    #     "nvvidconv flip-method=%d ! "
-    #     "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-    #     "videoconvert ! "
-    #     "video/x-raw, format=(string)BGR ! appsink"
-    #     % (
-    #         capture_width,
-    #         capture_height,
-    #         framerate,
-    #         flip_method,
-    #         display_width,
-    #         display_height,
-    #     )
-    # )
+):
+    return (
+
+        "nvarguscamerasrc !"
+        "video/x-raw(memory:NVMM), width=(int)%d, height=(int)%d, framerate=(fraction)%d/1 ! "
+        "nvvidconv flip-method=%d ! "
+        "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! appsink"
+        % (
+            
+        )
+    )
 
 
 def dt_parse(t):
