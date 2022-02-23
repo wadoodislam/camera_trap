@@ -49,7 +49,7 @@ class Node(Constants):
             if self.should_update:
                 self.update()
             time.sleep(0.5)
-            if time.time() - start_time >= 15: #Ideally use self.capture_interval
+            if time.time() - start_time >= 2: #Ideally use self.capture_interval - Hardcoded
                 break
 
             # time.sleep(2)
@@ -59,7 +59,7 @@ class Node(Constants):
 
         #print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
-    def capture(self):
+    def capture(self, interval, continue_event= False):
 
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
@@ -67,7 +67,8 @@ class Node(Constants):
             if not is_day_light():
                 self.night_vision(on=True)
 
-            self.event_id = uuid4().hex
+            if  !continue_event  
+                self.event_id = uuid4().hex
 
             if not os.path.exists(self.events_dir + self.event_id):
                 os.makedirs(self.events_dir + self.event_id)
@@ -77,8 +78,10 @@ class Node(Constants):
             for skip in range(35):  # to discard over exposure frames
                 _ = cap.read()
 
-            for sec in range(self.video_interval):  # change for number of pictures
+            for sec in range(interval):  # change for number of pictures
                 ret_val, frame = cap.read()
+                if not is_day_light():
+                    frame = ImageOperations.convert_image_to_gray(frame)
 
                 cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
 
@@ -88,6 +91,7 @@ class Node(Constants):
             #print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
             self.night_vision(on=False)
+            return TRUE
         else:
             print("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
 
@@ -98,10 +102,17 @@ class Node(Constants):
 
 
             if self.should_capture:
-                self.capture()
+                #self.capture(self.check_interval): # just caputure after every 1 or 2 seconds to see if something is happening
+                self.capture(2): # just caputure after every 1 or 2 seconds to see if something is happening - Hardcoded
+                if self.validate_event() # something is happening then do a full event capture   
+                    #self.move_event(self.trap_dir) # we should move this trap event to some other folder
+                    self.capture(self.video_interval, True)
+                else
+                    self.move_event(self.temp_dir) # we can eliminate the additional validation and save some power
 
                 GPIO.cleanup()
-                self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
+                #self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
+                self.move_event(self.upload_dir) # we can eliminate the additional validation and save some power
             else:
                 time.sleep(self.video_interval)
 

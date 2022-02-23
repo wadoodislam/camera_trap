@@ -219,6 +219,71 @@ class ImageOperations:
         change = (np.sum(image) / 255) / (image_width * image_height) * 100
         return change
 
+    @staticmethod
+    def get_optimal_font_scale(text, height, width, argfontFace, argthickness):
+        for scale in reversed(range(0, 60, 1)):
+          textSize = cv2.getTextSize(text, fontFace=argfontFace, fontScale=scale/100, thickness=argthickness)
+          new_height = textSize[0][1]
+          new_width = textSize[0][0]
+          #print(textSize)
+          if new_width <= width and new_height <= height:
+              return scale/100
+        return 1
+
+    @staticmethod    
+    def addFooter(self, img, date_time_str, sitename=''):  
+        #date_time_str = '2022-02-22 10:58:38.500000'
+        date_time_obj = datetime.strptime(date_time_str[:-7], '%Y-%m-%d %H:%M:%S')
+
+        # 'FEB 14, 2022      13:45:23     MARGALLA HILLS TRAIL 6     POWERED BY CVGL@LUMS'
+        longtxtstr = date_time_obj.strftime('%b %d, %Y     %H:%M:%S')+ '     ' +  sitename[0:24] + '     '+ 'POWERED BY LUMS'
+
+        # '14.02.22  13:45  MHT6  @LUMS'
+        shrttxtstr = date_time_obj.strftime('%d.%m.%y  %H:%M') + '  ' + "".join(e[0] for e in sitename.split()) + '  LUMS'
+
+        # get dimensions of image
+        dimensions = img.shape
+
+        # height, width, number of channels in image
+        height = img.shape[0]
+        width = img.shape[1]
+
+        # Check if it is a low resolution image and adjust the text bar height
+        row = math.ceil(height*0.95) # Hardcoded to 0.95 based on exprical evidence
+        textbar_height = height - row
+        txtstr = longtxtstr
+        if textbar_height < 11: # Hardcoded to 11 based on exprical evidence
+        row = height-11
+        txtstr = shrttxtstr
+
+        # Add black stip at the bottom
+        textbar_height = height - row
+        img[row:height, 0:width] = 0
+
+        # Line thickness of 2 px
+        thickness = 1
+
+        # font
+        font = cv2.FONT_HERSHEY_SIMPLEX  
+
+        # Assuming the image size and length of text won't change much, the function below should be called only once during init
+        fntscl = ImageOperations.get_optimal_font_scale(txtstr, textbar_height, width, font, thickness) # optimize
+
+        # fontScale
+        fontScale = fntscl #Show be set once per machine, optimize
+
+        # Blue color in BGR
+        color = (255, 255, 255)
+
+        # org
+        org = (2, math.ceil(height-0.3*textbar_height))
+
+        # Using cv2.putText() method
+        img = cv2.putText(img, txtstr, org, font, 
+                        fontScale, color, thickness, cv2.LINE_AA)
+
+        return img
+
 
 bus = smbus.SMBus(1)
 

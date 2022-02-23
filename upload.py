@@ -8,13 +8,16 @@ import requests
 from PIL import Image
 
 from utils import Constants
+from utils import ImageOperations
 
 
-class UploadManager(Constants):
+class UploadManager(Constants):    
 
     def send_image(self, event, item, width, height):
         item_path = os.path.join(self.upload_dir, event, item)
         im = Image.open(item_path)
+        # add footer here
+        im = ImageOperations.addFooter(im, file_name_t, ''): 
         temp_item_path = os.path.join(self.temp_dir, item)
         file, ext = os.path.splitext(temp_item_path)
         im_resize = im.resize((width, height), Image.ANTIALIAS)
@@ -37,9 +40,9 @@ class UploadManager(Constants):
     def run(self):
         print('checking for uploads...')
         while True:
-            if self.should_update:
-                self.update()
-                print('Updated from dashboard at: {}'.format(datetime.now()))
+            #if self.should_update:
+            #    self.update()
+            #    print('Updated from dashboard at: {}'.format(datetime.now()))
 
             events = os.listdir(self.upload_dir)
             if not events:
@@ -49,7 +52,7 @@ class UploadManager(Constants):
                 items = os.listdir(os.path.join(self.upload_dir, event))
                 if items:
                     item = items[0]
-                    self.send_image(event, item, width=340, height=220)
+                    self.send_image(event, item, width=340, height=220) # - Hardcoded
                     self.move_to_done(event, item)
                 else:
                     shutil.rmtree(os.path.join(self.upload_dir, event))
@@ -61,6 +64,7 @@ class UploadManager(Constants):
             os.makedirs(done_item_path)
         shutil.move(item_path, os.path.join(done_item_path, item))
         os.remove(os.path.join(self.temp_dir, item))
+
 
 
 if __name__ == "__main__":
