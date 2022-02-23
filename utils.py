@@ -40,8 +40,7 @@ def gstreamer_pipeline(capture_width=1280, capture_height=720,
     GST_DEBUG=2,
 ):
     return (
-        % (
-        )
+        
     )
 
 
