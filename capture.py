@@ -40,14 +40,14 @@ class Node(Constants):
         return True
 
     def detect_motion(self):
-        #print("started motion detect")        
+        #print("started motion detect")
         start_time = time.time()
 
         # flag = False
         # while not flag:
         while GPIO.input(7) == 0:
-            if self.should_update:
-                self.update()
+            #if self.should_update:
+            #    self.update()
             time.sleep(0.5)
             if time.time() - start_time >= 2: #Ideally use self.capture_interval - Hardcoded
                 break
@@ -57,7 +57,7 @@ class Node(Constants):
             # if GPIO.input(7) != 0:
             #     flag = True
 
-        #print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
+        print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
     def capture(self, interval, continue_event= False):
 
@@ -67,7 +67,7 @@ class Node(Constants):
             if not is_day_light():
                 self.night_vision(on=True)
 
-            if  !continue_event  
+            if  !continue_event
                 self.event_id = uuid4().hex
 
             if not os.path.exists(self.events_dir + self.event_id):
@@ -104,7 +104,7 @@ class Node(Constants):
             if self.should_capture:
                 #self.capture(self.check_interval): # just caputure after every 1 or 2 seconds to see if something is happening
                 self.capture(2): # just caputure after every 1 or 2 seconds to see if something is happening - Hardcoded
-                if self.validate_event() # something is happening then do a full event capture   
+                if self.validate_event() # something is happening then do a full event capture
                     #self.move_event(self.trap_dir) # we should move this trap event to some other folder
                     self.capture(self.video_interval, True)
                 else
@@ -165,7 +165,7 @@ class Node(Constants):
         for image_index in range(starting_index, len(image_paths)):
             image_2 = cv2.imread(image_paths[image_index])
             #diff = ImageOperations.error_image_gray(first_frame, image_2)
-            diff = ImageOperations.error_image_gray_histmatch(first_frame, image_2)            
+            diff = ImageOperations.error_image_gray_histmatch(first_frame, image_2)
             diff = ImageOperations.error_image_gray(first_frame, image_2)
             diff = ImageOperations.convert_to_binary(diff)
             diff = cv2.erode(diff, None, iterations=1)
@@ -174,7 +174,7 @@ class Node(Constants):
 
             if len(cnts) > 0:
               contours = [cv2.contourArea(cnt) for cnt in cnts]
-              max_contour = max(contours)              
+              max_contour = max(contours)
             else:
               max_contour = 0
 
