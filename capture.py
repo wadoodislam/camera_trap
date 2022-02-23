@@ -11,6 +11,23 @@ import requests
 
 from utils import gstreamer_pipeline, current_milli_time, Constants, is_day_light, ImageOperations
 
+event_id = None
+pir_pin = 7
+infrared = 12
+led_pin = 24
+gnd_pin = 23
+red_pin = 16
+green_pin = 22
+yellow_pin = 18
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(pir_pin, GPIO.IN)
+GPIO.setup(infrared, GPIO.OUT)
+GPIO.setup(led_pin, GPIO.OUT)
+GPIO.setup(gnd_pin, GPIO.OUT)
+GPIO.setup(red_pin, GPIO.OUT)
+GPIO.setup(yellow_pin, GPIO.OUT)
+GPIO.setup(.green_pin, GPIO.OUT)
 
 class Node(Constants):
     event_id = None
@@ -22,16 +39,7 @@ class Node(Constants):
     green_pin = 22
     yellow_pin = 18
 
-    def setup_sensors(self):
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pir_pin, GPIO.IN)
-        GPIO.setup(self.infrared, GPIO.OUT)
-        GPIO.setup(self.led_pin, GPIO.OUT)
-        GPIO.setup(self.gnd_pin, GPIO.OUT)
-        GPIO.setup(self.red_pin, GPIO.OUT)
-        GPIO.setup(self.yellow_pin, GPIO.OUT)
-        GPIO.setup(self.green_pin, GPIO.OUT)
-        self.night_vision(on=False)
+ self.night_vision(on=False)
 
     @property
     def should_capture(self):
@@ -67,7 +75,7 @@ class Node(Constants):
             if not is_day_light():
                 self.night_vision(on=True)
 
-            if  !continue_event
+            if  !continue_event:
                 self.event_id = uuid4().hex
 
             if not os.path.exists(self.events_dir + self.event_id):
@@ -97,7 +105,7 @@ class Node(Constants):
 
     def run(self):
         while True:
-            self.setup_sensors()
+            #self.setup_sensors()
             self.detect_motion()
 
 
@@ -131,31 +139,31 @@ class Node(Constants):
 
     def night_vision(self, on):
         if on:
-            GPIO.output(self.infrared, GPIO.HIGH)
-            GPIO.output(self.led_pin, GPIO.LOW)
-            GPIO.output(self.gnd_pin, GPIO.HIGH)
+            GPIO.output(infrared, GPIO.HIGH)
+            GPIO.output(led_pin, GPIO.LOW)
+            GPIO.output(gnd_pin, GPIO.HIGH)
         else:
-            GPIO.output(self.infrared, GPIO.LOW)
-            GPIO.output(self.led_pin, GPIO.HIGH)
-            GPIO.output(self.gnd_pin, GPIO.LOW)
+            GPIO.output(infrared, GPIO.LOW)
+            GPIO.output(led_pin, GPIO.HIGH)
+            GPIO.output(gnd_pin, GPIO.LOW)
 
     def green_on(self):
-        GPIO.output(self.green_pin, GPIO.HIGH)
+        GPIO.output(green_pin, GPIO.HIGH)
 
     def yellow_on(self):
-        GPIO.output(self.yellow_pin, GPIO.HIGH)
+        GPIO.output(yellow_pin, GPIO.HIGH)
 
     def red_on(self):
-        GPIO.output(self.red_pin, GPIO.HIGH)
+        GPIO.output(red_pin, GPIO.HIGH)
 
     def green_off(self):
-        GPIO.output(self.green_pin, GPIO.LOW)
+        GPIO.output(green_pin, GPIO.LOW)
 
     def yellow_off(self):
-        GPIO.output(self.yellow_pin, GPIO.LOW)
+        GPIO.output(yellow_pin, GPIO.LOW)
 
     def red_off(self):
-        GPIO.output(self.red_pin, GPIO.LOW)
+        GPIO.output(red_pin, GPIO.LOW)
 
     def motion_detection(self, image_paths, movement_threshold=1000, max_movement_threshold=3000):
         starting_index = 1
