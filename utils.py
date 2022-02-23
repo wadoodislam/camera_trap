@@ -253,7 +253,7 @@ class ImageOperations:
         textbar_height = height - row
         txtstr = longtxtstr
         if textbar_height < 11: # Hardcoded to 11 based on exprical evidence
-        row = height-11
+            row = height-11
         txtstr = shrttxtstr
 
         # Add black stip at the bottom
