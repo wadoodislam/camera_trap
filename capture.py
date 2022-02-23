@@ -42,16 +42,10 @@ class Node(Constants):
     def detect_motion(self):
         print("started motion detect")
 
-        # flag = False
-        # while not flag:
         while GPIO.input(7) == 0:
             if self.should_update:
                 self.update()
             time.sleep(0.5)
-            # time.sleep(2)
-
-            # if GPIO.input(7) != 0:
-            #     flag = True
 
         print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
@@ -60,7 +54,7 @@ class Node(Constants):
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
         if cap.isOpened():
-            if not is_day_light():
+            if not self.is_sunlight():
                 self.night_vision(on=True)
 
             self.event_id = uuid4().hex
@@ -170,6 +164,15 @@ class Node(Constants):
         }
         requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
         return False
+
+    def is_sunlight(self):
+        now = datetime.now()
+        if self.sunset < now:
+            return False
+        else:
+            return
+
+
 
 
 if __name__ == "__main__":

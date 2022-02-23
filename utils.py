@@ -208,6 +208,14 @@ class Constants:
         return self.ME['day_threshold']
 
     @property
+    def sunset(self):
+        return dt_parse(str(self.ME['sunset']))
+
+    @property
+    def sunrise(self):
+        return dt_parse(str(self.ME['sunrise']))
+
+    @property
     def night_threshold(self):
         return self.ME['night_threshold']
 
