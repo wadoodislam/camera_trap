@@ -39,7 +39,8 @@ class Node(Constants):
     green_pin = 22
     yellow_pin = 18
 
-    self.night_vision(on=False)
+    def setup_sensors(self):
+        self.night_vision(on=False)
 
     @property
     def should_capture(self):
@@ -105,7 +106,7 @@ class Node(Constants):
 
     def run(self):
         while True:
-            #self.setup_sensors()
+            self.setup_sensors()
             self.detect_motion()
 
 
