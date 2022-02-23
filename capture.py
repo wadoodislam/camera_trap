@@ -80,7 +80,7 @@ class Node(Constants):
             if  not continue_event:
                 self.event_id = uuid4().hex
                 if not os.path.exists(self.events_dir + self.event_id):
-                os.makedirs(self.events_dir + self.event_id)
+                    os.makedirs(self.events_dir + self.event_id)
 
 
             #print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
