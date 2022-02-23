@@ -115,7 +115,7 @@ class Node(Constants):
                 if self.validate_event(): # something is happening then do a full event capture
                     #self.move_event(self.trap_dir) # we should move this trap event to some other folder
                     self.capture(self.video_interval, True)
-                else
+                else:
                     self.move_event(self.temp_dir) # we can eliminate the additional validation and save some power
 
                 GPIO.cleanup()
