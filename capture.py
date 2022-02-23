@@ -39,7 +39,7 @@ class Node(Constants):
     green_pin = 22
     yellow_pin = 18
 
- self.night_vision(on=False)
+    self.night_vision(on=False)
 
     @property
     def should_capture(self):
