@@ -17,7 +17,7 @@ class UploadManager(Constants):
         item_path = os.path.join(self.upload_dir, event, item)
         im = Image.open(item_path)
         # add footer here
-        im = ImageOperations.addFooter(im, file_name_t, ''):
+        im = ImageOperations.addFooter(im, file_name_t, '')
         temp_item_path = os.path.join(self.temp_dir, item)
         file, ext = os.path.splitext(temp_item_path)
         im_resize = im.resize((width, height), Image.ANTIALIAS)
