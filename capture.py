@@ -112,7 +112,7 @@ class Node(Constants):
             if self.should_capture:
                 #self.capture(self.check_interval): # just caputure after every 1 or 2 seconds to see if something is happening
                 self.capture(2) # just caputure after every 1 or 2 seconds to see if something is happening - Hardcoded
-                if self.validate_event() # something is happening then do a full event capture
+                if self.validate_event(): # something is happening then do a full event capture
                     #self.move_event(self.trap_dir) # we should move this trap event to some other folder
                     self.capture(self.video_interval, True)
                 else
