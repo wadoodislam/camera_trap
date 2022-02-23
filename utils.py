@@ -12,33 +12,15 @@ from datetime import datetime, timedelta
 
 import requests
 
-
-# def gstreamer_pipeline(capture_width=640, capture_height=480, display_width=640, display_height=480, framerate=30, flip_method=2):
-#     return (
-#             "nvarguscamerasrc ! "
-#             "video/x-raw(memory:NVMM), "
-#             "width=(int)%d, height=(int)%d, "
-#             "format=(string)NV12, framerate=(fraction)%d/1 ! "
-#             "nvvidconv flip-method=%d ! "
-#             "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-#             "videoconvert ! "
-#             "video/x-raw, format=(string)BGR ! appsink"
-#             % (
-#                 capture_width,
-#                 capture_height,
-#                 framerate,
-#                 flip_method,
-#                 display_width,
-#                 display_height,
-#             )
-#     )
 def gstreamer_pipeline(capture_width=1280, capture_height=720,
     display_width=960,
     display_height=540,
     framerate=30,
     flip_method=0,
+
 ):
     return (
+
         "nvarguscamerasrc !"
         "video/x-raw(memory:NVMM), width=(int)%d, height=(int)%d, framerate=(fraction)%d/1 ! "
         "nvvidconv flip-method=%d ! "
@@ -52,6 +34,7 @@ def gstreamer_pipeline(capture_width=1280, capture_height=720,
             flip_method,
             display_width,
             display_height,
+
         )
     )
 
@@ -109,13 +92,13 @@ class ImageOperations:
     def error_image_gray_histmatch(im1, im2, invert=False):
         im1_gray = ImageOperations.convert_image_to_gray(im1)
         im2_gray = ImageOperations.convert_image_to_gray(im2)
-        
-        im2_gray = ImageOperations.match_histograms(im2_gray, im1_gray, multichannel=False)
+
+        im2_gray = ImageOperations.match_histograms(im2_gray, im1_gray)
         _result = cv2.absdiff(im1_gray, im2_gray.astype(np.uint8))
         _result = cv2.normalize(_result, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         if invert:
             _result = 255 - _result
-        return _result 
+        return _result
 
     @staticmethod
     def match_histograms(src_image, ref_image):
@@ -128,32 +111,32 @@ class ImageOperations:
         :return: image_after_matching
         :rtype: image (array)
         """
-  
+
 
         # Compute the histograms separately
         # The flatten() Numpy method returns a copy of the array c
         # collapsed into one dimension.
         src_hist, bin_0 = np.histogram(src_image.flatten(), 256, [0,256])
-        ref_hist, bin_3 = np.histogram(ref_image.flatten(), 256, [0,256])    
-        
+        ref_hist, bin_3 = np.histogram(ref_image.flatten(), 256, [0,256])
+
         # Compute the normalized cdf for the source and reference image
         # Get the cumulative sum of the elements
         src_cdf = src_hist.cumsum()
         ref_cdf = ref_hist.cumsum()
- 
+
         # Normalize the cdf
         src_cdf = src_cdf / float(src_cdf.max())
         ref_cdf = ref_cdf / float(ref_cdf.max())
-        
+
         # Make a separate lookup table for each color
         lookup_table = ImageOperations.calculate_lookup(src_cdf, ref_cdf)
-        
+
         # Use the lookup function to transform the colors of the original
         # source image
         image_after_matching = cv2.LUT(src_image, lookup_table)
-        
+
         #image_after_matching = cv2.convertScaleAbs(image_after_matching)
-    
+
         return image_after_matching
 
     @staticmethod
@@ -230,8 +213,8 @@ class ImageOperations:
               return scale/100
         return 1
 
-    @staticmethod    
-    def addFooter(self, img, date_time_str, sitename=''):  
+    @staticmethod
+    def addFooter(self, img, date_time_str, sitename=''):
         #date_time_str = '2022-02-22 10:58:38.500000'
         date_time_obj = datetime.strptime(date_time_str[:-7], '%Y-%m-%d %H:%M:%S')
 
@@ -253,7 +236,7 @@ class ImageOperations:
         textbar_height = height - row
         txtstr = longtxtstr
         if textbar_height < 11: # Hardcoded to 11 based on exprical evidence
-        row = height-11
+            row = height-11
         txtstr = shrttxtstr
 
         # Add black stip at the bottom
@@ -264,7 +247,7 @@ class ImageOperations:
         thickness = 1
 
         # font
-        font = cv2.FONT_HERSHEY_SIMPLEX  
+        font = cv2.FONT_HERSHEY_SIMPLEX
 
         # Assuming the image size and length of text won't change much, the function below should be called only once during init
         fntscl = ImageOperations.get_optimal_font_scale(txtstr, textbar_height, width, font, thickness) # optimize
@@ -279,7 +262,7 @@ class ImageOperations:
         org = (2, math.ceil(height-0.3*textbar_height))
 
         # Using cv2.putText() method
-        img = cv2.putText(img, txtstr, org, font, 
+        img = cv2.putText(img, txtstr, org, font,
                         fontScale, color, thickness, cv2.LINE_AA)
 
         return img
@@ -296,7 +279,7 @@ def is_day_light():
         data = bus.read_i2c_block_data(DEVICE, ONE_TIME_HIGH_RES_MODE_1)
         light = (data[1] + (256 * data[0])) / 1.2
 
-    return light > 500
+    return light > 800
 
 
 class Constants:
@@ -343,7 +326,7 @@ class Constants:
 
     #@property
     #def capture_interval(self):
-    #    return self.ME['capture_interval']        
+    #    return self.ME['capture_interval']
 
     @property
     def day_threshold(self):
