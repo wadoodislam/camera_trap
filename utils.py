@@ -296,7 +296,7 @@ def is_day_light():
         data = bus.read_i2c_block_data(DEVICE, ONE_TIME_HIGH_RES_MODE_1)
         light = (data[1] + (256 * data[0])) / 1.2
 
-    return light > 100
+    return light > 800
 
 
 class Constants:
