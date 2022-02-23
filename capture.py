@@ -69,7 +69,7 @@ class Node(Constants):
 
         print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
 
-    def capture(self, interval, continue_event= False):
+    def capture(self, interval, continue_event = False):
 
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
@@ -79,9 +79,9 @@ class Node(Constants):
 
             if  not continue_event:
                 self.event_id = uuid4().hex
-
-            if not os.path.exists(self.events_dir + self.event_id):
+                if not os.path.exists(self.events_dir + self.event_id):
                 os.makedirs(self.events_dir + self.event_id)
+
 
             #print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
 
