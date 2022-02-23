@@ -74,8 +74,13 @@ class Node(Constants):
         cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
         if cap.isOpened():
+            if is_day_light():
+                GPIO.output(led_pin, GPIO.HIGH)
+                GPIO.output(gnd_pin, GPIO.LOW)
             if not is_day_light():
                 self.night_vision(on=True)
+                GPIO.output(led_pin, GPIO.LOW)
+                GPIO.output(gnd_pin, GPIO.HIGH)
 
             if  not continue_event:
                 self.event_id = uuid4().hex
@@ -117,11 +122,10 @@ class Node(Constants):
                 if self.validate_event(): # something is happening then do a full event capture
                     #self.move_event(self.trap_dir) # we should move this trap event to some other folder
                     self.capture(self.video_interval, True)
-                    print("l1")
                     self.move_event(self.upload_dir)
                 else:
                     self.move_event(self.temp_dir) # we can eliminate the additional validation and save some power
-                    print("l2")
+
 
                 #GPIO.cleanup()
                 #self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
@@ -145,12 +149,10 @@ class Node(Constants):
     def night_vision(self, on):
         if on:
             GPIO.output(infrared, GPIO.HIGH)
-            GPIO.output(led_pin, GPIO.LOW)
-            GPIO.output(gnd_pin, GPIO.HIGH)
+
         else:
             GPIO.output(infrared, GPIO.LOW)
-            GPIO.output(led_pin, GPIO.HIGH)
-            GPIO.output(gnd_pin, GPIO.LOW)
+
 
     def green_on(self):
         GPIO.output(green_pin, GPIO.HIGH)
