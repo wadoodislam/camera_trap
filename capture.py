@@ -106,6 +106,7 @@ class Node(Constants):
             #print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
             self.night_vision(on=False)
+            time.sleep(.25)
             return True
         else:
             print("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
