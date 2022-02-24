@@ -55,7 +55,7 @@ class ImageOperations:
     @staticmethod
     def convert_image_to_gray(im):
         if len(im.shape) == 3:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY, 1)
         return im
 
     @staticmethod
@@ -211,10 +211,10 @@ class ImageOperations:
 
     @staticmethod
     def addFooter(img, short_txt, long_txt):
-        height, width = img.shape
+        height, width, _ = img.shape
 
         # Check if it is a low resolution image and adjust the text bar height
-        row = math.ceil(height * 0.95)  # Hardcoded to 0.95 based on exprical evidence
+        row = int(math.ceil(height * 0.95))  # Hardcoded to 0.95 based on exprical evidence
         textbar_height = height - row
         txtstr = long_txt
 
@@ -239,7 +239,7 @@ class ImageOperations:
         fontScale = fntscl  # Show be set once per machine, optimize
 
         color = (255, 255, 255)  # Blue color in BGR
-        org = (2, math.ceil(height - 0.3 * textbar_height))  # org
+        org = (2, int(math.ceil(height - 0.3 * textbar_height)))  # org
         # Using cv2.putText() method
         return cv2.putText(img, txtstr, org, font, fontScale, color, thickness, cv2.LINE_AA)
 

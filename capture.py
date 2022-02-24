@@ -95,14 +95,12 @@ class Node(Constants):
         GPIO.output(self.red_pin, GPIO.LOW)
 
     def detect_motion(self):
+        GPIO.output(self.infrared, GPIO.LOW)
         start_time = time.time()
 
-        while GPIO.input(7) == 0:
-            time.sleep(0.5)
+        while time.time() - start_time < 5:
             if self.should_update:
                 self.update()
-            if time.time() - start_time >= 2:  # Ideally use self.capture_interval - Hardcoded
-                break
 
     def capture(self, interval, continue_event=False):
         cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)

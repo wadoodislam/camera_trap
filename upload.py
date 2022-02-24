@@ -3,6 +3,7 @@ import shutil
 import time
 from datetime import datetime
 
+import cv2
 import requests
 from PIL import Image
 
@@ -15,14 +16,14 @@ class UploadManager(Constants):
     def send_image(self, event, item, width, height):
         item_path = os.path.join(self.upload_dir, event, item)
         file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
-        im = Image.open(item_path)
+        im = cv2.imread(item_path)
         # add footer here
         short_txt, long_txt = self.get_copy_rights(file_dt)
         im = ImageOperations.addFooter(im, short_txt, long_txt)
         temp_item_path = os.path.join(self.temp_dir, item)
         file, ext = os.path.splitext(temp_item_path)
-        im_resize = im.resize((width, height), Image.ANTIALIAS)
-        im_resize.save(file + '.jpg', 'JPEG', quality=90)
+        im_resize = cv2.resize(im, (width, height))
+        cv2.imwrite(file + '.jpg', im_resize,  [cv2.IMWRITE_JPEG_QUALITY, 90])
         payload = {'uuid': event, 'date': time.strftime("%Y-%m-%d", time.localtime())}
         files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
         try:
