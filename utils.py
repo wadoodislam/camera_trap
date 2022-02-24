@@ -55,7 +55,7 @@ class ImageOperations:
     @staticmethod
     def convert_image_to_gray(im):
         if len(im.shape) == 3:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY, 1)
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         return im
 
     @staticmethod
