@@ -50,8 +50,8 @@ class UploadManager(Constants):
                 items = os.listdir(os.path.join(self.upload_dir, event))
                 if items:
                     item = items[0]
-                    self.send_image(event, item, width=640, height=480)  # - Hardcoded
-                    self.move_to_done(event, item)
+                    if self.send_image(event, item, width=640, height=480):
+                        self.move_to_done(event, item)
                 else:
                     shutil.rmtree(os.path.join(self.upload_dir, event))
 
