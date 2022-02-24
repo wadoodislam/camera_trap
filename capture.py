@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import time
@@ -7,9 +6,8 @@ from uuid import uuid4
 
 import Jetson.GPIO as GPIO
 import cv2
-import requests
 
-from utils import gstreamer_pipeline, current_milli_time, Constants, is_day_light, ImageOperations
+from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperations
 
 
 class Node(Constants):
@@ -23,6 +21,7 @@ class Node(Constants):
     yellow_pin = 18
 
     def setup_sensors(self):
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.pir_pin, GPIO.IN)
         GPIO.setup(self.infrared, GPIO.OUT)
@@ -31,7 +30,6 @@ class Node(Constants):
         GPIO.setup(self.red_pin, GPIO.OUT)
         GPIO.setup(self.yellow_pin, GPIO.OUT)
         GPIO.setup(self.green_pin, GPIO.OUT)
-        self.night_vision(on=False)
 
     @property
     def should_capture(self):
@@ -39,58 +37,19 @@ class Node(Constants):
             return False
         return True
 
-    def detect_motion(self):
-        print("started motion detect")
-
-        while GPIO.input(7) == 0:
-            if self.should_update:
-                self.update()
-            time.sleep(0.5)
-
-        print("motion detected at: " + datetime.now().strftime('%H:%M:%S'))
-
-    def capture(self):
-
-        cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-
-        if cap.isOpened():
-            if not self.is_sunlight():
-                self.night_vision(on=True)
-
-            self.event_id = uuid4().hex
-
-            if not os.path.exists(self.events_dir + self.event_id):
-                os.makedirs(self.events_dir + self.event_id)
-
-            print("Starting capture at: " + datetime.now().strftime('%H:%M:%S'))
-
-            for skip in range(35):  # to discard over exposure frames
-                _ = cap.read()
-
-            for sec in range(self.video_interval):  # change for number of pictures
-                ret_val, frame = cap.read()
-
-                cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
-
-                for skip in range(self.frames_per_sec - 1):
-                    _ = cap.read()
-
-            print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
-            cap.release()
-            self.night_vision(on=False)
-        else:
-            print("Unable to open camera")
-
     def run(self):
+        self.setup_sensors()
+
         while True:
-            self.setup_sensors()
             self.detect_motion()
-
+            self.night_vision(on=not self.is_sunlight())
             if self.should_capture:
-                self.capture()
-
-                GPIO.cleanup()
-                self.move_event(self.upload_dir if self.validate_event() else self.false_dir)
+                self.capture(2)  # just capture after every 1 or 2 seconds to see if something is happening - Hardcoded
+                if self.validate_event():  # something is happening then do a full event capture
+                    self.capture(self.video_interval, True)
+                    self.move_event(self.upload_dir)
+                else:
+                    self.move_event(self.false_dir)  # we can eliminate the additional validation and save some power
             else:
                 time.sleep(self.video_interval)
 
@@ -98,7 +57,7 @@ class Node(Constants):
         event_path = os.path.join(self.events_dir, self.event_id)
         images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
 
-        if is_day_light():
+        if self.is_sunlight():
             return self.motion_detection(images, movement_threshold=self.day_threshold)
 
         return self.motion_detection(images, movement_threshold=self.night_threshold)
@@ -135,44 +94,67 @@ class Node(Constants):
     def red_off(self):
         GPIO.output(self.red_pin, GPIO.LOW)
 
-    def motion_detection(self, image_paths, movement_threshold=1000, max_movement_threshold=3000):
+    def detect_motion(self):
+        start_time = time.time()
+
+        while GPIO.input(7) == 0:
+            time.sleep(0.5)
+            if self.should_update:
+                self.update()
+            if time.time() - start_time >= 2:  # Ideally use self.capture_interval - Hardcoded
+                break
+
+    def capture(self, interval, continue_event=False):
+        cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+
+        if cam.isOpened():
+            if not continue_event:
+                self.event_id = uuid4().hex
+                if not os.path.exists(self.events_dir + self.event_id):
+                    os.makedirs(self.events_dir + self.event_id)
+
+            for skip in range(35):  # to discard over exposure frames
+                _ = cam.read()
+
+            for sec in range(interval):  # change for number of pictures
+                ret_val, frame = cam.read()
+                if not self.is_sunlight():
+                    frame = ImageOperations.convert_image_to_gray(frame)
+
+                cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
+
+                for skip in range(self.frames_per_sec - 1):
+                    _ = cam.read()
+
+            cam.release()
+        else:
+            self.send_log("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
+
+    def motion_detection(self, image_paths, movement_threshold=1000):
         starting_index = 1
         first_frame = cv2.imread(image_paths[0])
         max_contours = []
 
         for image_index in range(starting_index, len(image_paths)):
             image_2 = cv2.imread(image_paths[image_index])
-            diff = ImageOperations.error_image_gray(first_frame, image_2)
+            diff = ImageOperations.error_image_gray_histmatch(first_frame, image_2)
             diff = ImageOperations.convert_to_binary(diff)
-            diff = cv2.dilate(diff, None, iterations=2)
+            diff = cv2.erode(diff, None, iterations=1)
+            diff = cv2.dilate(diff, None, iterations=3)
             cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-            contours = [cv2.contourArea(cnt) for cnt in cnts]
-            max_contour = max(contours)
+            max_contour = max([cv2.contourArea(cnt) for cnt in cnts] or [0])
             max_contours.append(max_contour)
 
             if movement_threshold < max_contour:
-                log = {
-                    'message': 'Event: {}, index: {}, max contour:{}'.format(self.event_id, image_index, max_contour)
-                }
-                requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
+                self.send_log('Event: {}, index: {}, max contour:{}'.format(self.event_id, image_index, max_contour))
                 return True
 
-        print("Event ID: {}, Contour Areas: {}".format(self.event_id, max_contours))
-        log = {
-            'message': 'Event: {}, max contours:{}'.format(self.event_id, max_contours)
-        }
-        requests.post(self.logs_url, headers=self.headers, data=json.dumps(log))
+        self.send_log('Event: {}, max contours:{}'.format(self.event_id, max_contours))
         return False
 
     def is_sunlight(self):
         now = datetime.now()
-        if self.sunset < now:
-            return False
-        else:
-            return
-
-
+        return self.sunrise.time() < now.time() < self.sunset.time()
 
 
 if __name__ == "__main__":
