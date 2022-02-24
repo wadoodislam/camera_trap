@@ -19,7 +19,7 @@ class UploadManager(Constants):
         im = cv2.imread(item_path)
         # add footer here
         short_txt, long_txt = self.get_copy_rights(file_dt)
-        im = ImageOperations.addFooter(im, short_txt, long_txt)
+        #im = ImageOperations.addFooter(im, short_txt, long_txt)
         temp_item_path = os.path.join(self.temp_dir, item)
         file, ext = os.path.splitext(temp_item_path)
         im_resize = cv2.resize(im, (width, height))

@@ -34,6 +34,7 @@ class Node(Constants):
     @property
     def should_capture(self):
         if not self.ME['live']:
+            print("not live")
             return False
         return True
 
@@ -68,10 +69,12 @@ class Node(Constants):
 
     def night_vision(self, on):
         if on:
+            print("ir on")
             GPIO.output(self.infrared, GPIO.HIGH)
             GPIO.output(self.led_pin, GPIO.LOW)
             GPIO.output(self.gnd_pin, GPIO.HIGH)
         else:
+            print("ir off")
             GPIO.output(self.infrared, GPIO.LOW)
             GPIO.output(self.led_pin, GPIO.HIGH)
             GPIO.output(self.gnd_pin, GPIO.LOW)
@@ -152,6 +155,7 @@ class Node(Constants):
 
     def is_sunlight(self):
         now = datetime.now()
+        print(now)
         return self.sunrise.time() < now.time() < self.sunset.time()
 
 
