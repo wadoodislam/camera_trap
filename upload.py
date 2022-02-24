@@ -64,7 +64,7 @@ class UploadManager(Constants):
         os.remove(os.path.join(self.temp_dir, item))
 
     def get_copy_rights(self, file_dt):
-        long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + self.name + '     ' + 'POWERED BY LUMS'
+        long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + 'Camer ID' + '     ' + 'POWERED BY LUMS'
         shrt_txt = file_dt.strftime('%d.%m.%y  %H:%M') + '  ' + "".join(e[0] for e in self.name.split()) + '  LUMS'
         return shrt_txt, long_txt
 
