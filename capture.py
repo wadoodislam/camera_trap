@@ -34,7 +34,6 @@ class Node(Constants):
     @property
     def should_capture(self):
         if not self.ME['live']:
-            print("not live")
             return False
         return True
 
@@ -155,7 +154,6 @@ class Node(Constants):
 
     def is_sunlight(self):
         now = datetime.now()
-        print(now)
         return self.sunrise.time() < now.time() < self.sunset.time()
 
 
