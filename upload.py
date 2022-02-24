@@ -28,12 +28,14 @@ class UploadManager(Constants):
         try:
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
             if response.status_code == 201:
-                self.send_log('Upload success for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
+                #self.send_log('Upload success for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
+                print('Upload success for Event')
                 return True
         except Exception as e:
             pass
 
-        self.send_log('Upload failed for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
+        #self.send_log('Upload failed for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
+        print('Upload failed for Event')
         return False
 
     def run(self):
