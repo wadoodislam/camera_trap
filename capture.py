@@ -3,7 +3,7 @@ import shutil
 import time
 from datetime import datetime
 from uuid import uuid4
-
+from glob import glob
 import Jetson.GPIO as GPIO
 import cv2
 
@@ -38,11 +38,12 @@ class Node(Constants):
         return True
 
     def run(self):
+        self.pending_events()
         self.setup_sensors()
 
         while True:
             self.detect_motion()
-            self.night_vision(on=not self.is_sunlight())
+            self.night_vision(on=not self.is_sunlight(datetime.now()))
             if self.should_capture:
                 self.capture(2)  # just capture after every 1 or 2 seconds to see if something is happening - Hardcoded
                 if self.validate_event():  # something is happening then do a full event capture
@@ -56,8 +57,8 @@ class Node(Constants):
     def validate_event(self):
         event_path = os.path.join(self.events_dir, self.event_id)
         images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
-
-        if self.is_sunlight():
+        event_time = datetime.fromtimestamp(float(os.path.basename(img)[:-4])/1000)
+        if self.is_sunlight(event_time):
             return self.motion_detection(images, movement_threshold=self.day_threshold)
 
         return self.motion_detection(images, movement_threshold=self.night_threshold)
@@ -68,12 +69,10 @@ class Node(Constants):
 
     def night_vision(self, on):
         if on:
-            print("ir on")
             GPIO.output(self.infrared, GPIO.HIGH)
             GPIO.output(self.led_pin, GPIO.LOW)
             GPIO.output(self.gnd_pin, GPIO.HIGH)
         else:
-            print("ir off")
             GPIO.output(self.infrared, GPIO.LOW)
             GPIO.output(self.led_pin, GPIO.HIGH)
             GPIO.output(self.gnd_pin, GPIO.LOW)
@@ -118,7 +117,7 @@ class Node(Constants):
 
             for sec in range(interval):  # change for number of pictures
                 ret_val, frame = cam.read()
-                if not self.is_sunlight():
+                if not self.is_sunlight(datetime.now()):
                     frame = ImageOperations.convert_image_to_gray(frame)
 
                 cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
@@ -152,9 +151,16 @@ class Node(Constants):
         self.send_log('Event: {}, max contours:{}'.format(self.event_id, max_contours))
         return False
 
-    def is_sunlight(self):
-        now = datetime.now()
+    def is_sunlight(self, now):
         return self.sunrise.time() < now.time() < self.sunset.time()
+
+    def pending_events(self):
+        for event in glob(self.events_dir + '*'):
+            self.event_id = event.replace(self.events_dir, '')
+            if self.validate_event():
+                self.move_event(self.upload_dir)
+            else:
+                self.move_event(self.false_dir)
 
 
 if __name__ == "__main__":
