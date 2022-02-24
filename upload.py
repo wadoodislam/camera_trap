@@ -37,9 +37,9 @@ class UploadManager(Constants):
     def run(self):
         print('checking for uploads...')
         while True:
-            if self.should_update:
-                self.update()
-                print('Updated from dashboard at: {}'.format(datetime.now()))
+            #if self.should_update:
+            #    self.update()
+            #    print('Updated from dashboard at: {}'.format(datetime.now()))
 
             events = os.listdir(self.upload_dir)
             if not events:
@@ -50,6 +50,7 @@ class UploadManager(Constants):
                 if items:
                     item = items[0]
                     self.send_image(event, item, width=340, height=220)
+                    print('uploaded image' + str(event))
                     self.move_to_done(event, item)
                 else:
                     shutil.rmtree(os.path.join(self.upload_dir, event))
