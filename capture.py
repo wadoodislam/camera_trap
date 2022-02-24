@@ -157,6 +157,7 @@ class Node(Constants):
 
     def is_sunlight(self):
         now = datetime.now()
+        print(now)
         return self.sunrise.time() < now.time() < self.sunset.time()
 
 
