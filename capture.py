@@ -95,7 +95,7 @@ class Node(Constants):
 
             for sec in range(interval):  # change for number of pictures
                 ret_val, frame = cap.read()
-                for skip in range(self.frames_per_sec - 1):
+                for skip in range(60): 
                    _ = cap.read()
                 if not is_day_light():
                     frame = ImageOperations.convert_image_to_gray(frame)
