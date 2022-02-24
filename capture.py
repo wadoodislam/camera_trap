@@ -75,12 +75,12 @@ class Node(Constants):
 
         if cap.isOpened():
             if is_day_light():
-                GPIO.output(led_pin, GPIO.HIGH)
-                GPIO.output(gnd_pin, GPIO.LOW)
-            if not is_day_light():
-                self.night_vision(on=True)
                 GPIO.output(led_pin, GPIO.LOW)
                 GPIO.output(gnd_pin, GPIO.HIGH)
+            if not is_day_light():
+                self.night_vision(on=True)
+                GPIO.output(led_pin, GPIO.HIGH)
+                GPIO.output(gnd_pin, GPIO.LOW)
 
             if  not continue_event:
                 self.event_id = uuid4().hex
@@ -99,14 +99,16 @@ class Node(Constants):
                     frame = ImageOperations.convert_image_to_gray(frame)
 
                 cv2.imwrite(self.events_dir + self.event_id + '/' + str(current_milli_time()) + '.jpg', frame)
+                time.sleep(1)
 
                 for skip in range(self.frames_per_sec - 1):
                     _ = cap.read()
 
             #print("Done capturing at: " + datetime.now().strftime('%H:%M:%S'))
             cap.release()
+
             self.night_vision(on=False)
-            time.sleep(.25)
+
             return True
         else:
             print("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
