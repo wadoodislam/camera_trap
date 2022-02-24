@@ -65,7 +65,7 @@ class UploadManager(Constants):
 
     def get_copy_rights(self, file_dt):
         long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + 'Camer ID' + '     ' + 'POWERED BY LUMS'
-        shrt_txt = file_dt.strftime('%d.%m.%y  %H:%M') + '  ' + "".join(e[0] for e in self.name.split()) + '  LUMS'
+        shrt_txt = file_dt.strftime('%d.%m.%y  %H:%M') + '  ' + 'ID' + '  LUMS'
         return shrt_txt, long_txt
 
 
