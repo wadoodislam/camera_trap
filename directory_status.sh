@@ -1,5 +1,10 @@
-ls -al data_root/events
-ls -al data_root/uploads
-ls -al data_root/false
-ls -al data_root/done
-ls -al data_root/temp
+echo Events Directory
+ls -alt data_root/events
+echo Uploads Directory
+ls -alt data_root/uploads
+echo False Directory
+ls -alt data_root/false
+echo Done Directory
+ls -alt data_root/done
+echo Temp Directory
+ls -alt data_root/temp
