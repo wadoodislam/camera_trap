@@ -57,6 +57,10 @@ class Node(Constants):
     def validate_event(self):
         event_path = os.path.join(self.events_dir, self.event_id)
         images = sorted([os.path.join(event_path, img) for img in os.listdir(event_path)])
+
+        if not images:
+            return False
+
         event_time = datetime.fromtimestamp(float(os.path.basename(img)[:-4])/1000)
         if self.is_sunlight(event_time):
             return self.motion_detection(images, movement_threshold=self.day_threshold)
