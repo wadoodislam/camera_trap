@@ -61,6 +61,7 @@ class UploadManager(Constants):
         if not os.path.exists(done_item_path):
             os.makedirs(done_item_path)
         shutil.move(item_path, os.path.join(done_item_path, item))
+        print('uploaded: ' + os.path.join(done_item_path, item))
         os.remove(os.path.join(self.temp_dir, item))
 
     def get_copy_rights(self, file_dt):
