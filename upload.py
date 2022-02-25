@@ -52,6 +52,7 @@ class UploadManager(Constants):
                     item = items[0]
                     if self.send_image(event, item, width=640, height=480):
                         self.move_to_done(event, item)
+                    os.remove(os.path.join(self.temp_dir, item))
                 else:
                     shutil.rmtree(os.path.join(self.upload_dir, event))
 
@@ -62,7 +63,6 @@ class UploadManager(Constants):
             os.makedirs(done_item_path)
         shutil.move(item_path, os.path.join(done_item_path, item))
         print('uploaded: ' + os.path.join(done_item_path, item))
-        os.remove(os.path.join(self.temp_dir, item))
 
     def get_copy_rights(self, file_dt):
         long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + self.name + '     ' + 'POWERED BY LUMS'
