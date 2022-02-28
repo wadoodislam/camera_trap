@@ -74,12 +74,12 @@ class Node(Constants):
     def night_vision(self, on):
         if on:
             GPIO.output(self.infrared, GPIO.HIGH)
-            GPIO.output(self.led_pin, GPIO.LOW)
-            GPIO.output(self.gnd_pin, GPIO.HIGH)
-        else:
-            GPIO.output(self.infrared, GPIO.LOW)
             GPIO.output(self.led_pin, GPIO.HIGH)
             GPIO.output(self.gnd_pin, GPIO.LOW)
+        else:
+            GPIO.output(self.infrared, GPIO.LOW)
+            GPIO.output(self.led_pin, GPIO.LOW)
+            GPIO.output(self.gnd_pin, GPIO.HIGH)
 
     def green_on(self):
         GPIO.output(self.green_pin, GPIO.HIGH)
