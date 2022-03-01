@@ -13,7 +13,7 @@ from utils import ImageOperations
 class UploadManager(Constants):
 
     def send_image(self, event, item, width, height):
-        item_path = os.path.join(self.upload_dir, event, item)
+        item_path = os.path.join(self.events_dir, event, item)
         file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
         im = cv2.imread(item_path)
         # add footer here
@@ -42,22 +42,22 @@ class UploadManager(Constants):
             if self.should_update:
                self.update()
 
-            events = os.listdir(self.upload_dir)
+            events = os.listdir(self.events_dir)
             if not events:
                 time.sleep(1)
             else:
-                event = sorted(events, key=lambda e: os.stat(os.path.join(self.upload_dir, e)).st_ctime, reverse=True)[0]
-                items = os.listdir(os.path.join(self.upload_dir, event))
+                event = sorted(events, key=lambda e: os.stat(os.path.join(self.events_dir, e)).st_ctime, reverse=True)[0]
+                items = os.listdir(os.path.join(self.events_dir, event))
                 if items:
                     item = items[0]
                     if self.send_image(event, item, width=640, height=480):
                         self.move_to_done(event, item)
                     os.remove(os.path.join(self.temp_dir, item))
                 else:
-                    shutil.rmtree(os.path.join(self.upload_dir, event))
+                    shutil.rmtree(os.path.join(self.events_dir, event))
 
     def move_to_done(self, event, item):
-        item_path = os.path.join(self.upload_dir, event, item)
+        item_path = os.path.join(self.events_dir, event, item)
         done_item_path = os.path.join(self.done_dir, event)
         if not os.path.exists(done_item_path):
             os.makedirs(done_item_path)

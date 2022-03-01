@@ -1,9 +1,5 @@
 echo Events Directory
 ls -alt data_root/events
-echo Uploads Directory
-ls -alt data_root/uploads
-echo False Directory
-ls -alt data_root/false
 echo Done Directory
 ls -alt data_root/done
 echo Temp Directory

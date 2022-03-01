@@ -206,12 +206,12 @@ class ImageOperations:
             new_height = textSize[0][1]
             new_width = textSize[0][0]
             if new_width <= width and new_height <= height:
-                return scale / 100
+                return scale / 100.0
         return 1
 
     @staticmethod
     def addFooter(img, short_txt, long_txt):
-        height, width, _ = img.shape
+        height, width = img.shape[:2]
 
         # Check if it is a low resolution image and adjust the text bar height
         row = int(math.ceil(height * 0.95))  # Hardcoded to 0.95 based on exprical evidence
@@ -251,47 +251,8 @@ def get_disk_usage():
     return round(disk.free / (1024.0 ** 3), 3)
 
 
-class Constants:
-    data_root = 'data_root'
-    data_dir = os.environ['HOME'] + '/' + data_root
-    events_dir = data_dir + '/events/'
-    upload_dir = data_dir + '/uploads/'
-    temp_dir = data_dir + '/temp/'
-    false_dir = data_dir + '/false/'
-    done_dir = data_dir + '/done/'
-    me_url = os.environ['SITE'] + '/core/api/camera/me/'
-    logs_url = os.environ['SITE'] + '/core/api/logs/'
-    image_url = os.environ['SITE'] + '/core/api/image/'
+class JSON:
     ME = None
-
-    headers = {
-        'Authorization': 'Token ' + os.environ['TOKEN'],
-        'Content-Type': 'application/json'
-    }
-    headers_im = {
-        'Authorization': 'Token ' + os.environ['TOKEN'],
-    }
-
-    def __init__(self):
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
-        if not os.path.exists(self.events_dir):
-            os.makedirs(self.events_dir)
-        if not os.path.exists(self.upload_dir):
-            os.makedirs(self.upload_dir)
-        if not os.path.exists(self.temp_dir):
-            os.makedirs(self.temp_dir)
-        if not os.path.exists(self.false_dir):
-            os.makedirs(self.false_dir)
-        if not os.path.exists(self.done_dir):
-            os.makedirs(self.done_dir)
-        self.update()
-
-    @property
-    def should_update(self):
-        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
-            return False
-        return True
 
     @property
     def name(self):
@@ -300,6 +261,14 @@ class Constants:
     @property
     def video_interval(self):
         return self.ME['video_interval']
+
+    @property
+    def motion_interval(self):
+        return self.ME['motion_interval']\
+
+    @ property
+    def rest_interval(self):
+        return self.ME['rest_interval']
 
     @property
     def day_threshold(self):
@@ -329,6 +298,72 @@ class Constants:
     def frames_per_sec(self):
         return self.ME['frames_per_sec']
 
+    @property
+    def red_pin(self):
+        return self.ME['red_pin']
+
+    @property
+    def yellow_pin(self):
+        return self.ME['yellow_pin']
+
+    @property
+    def green_pin(self):
+        return self.ME['green_pin']
+
+    @ property
+    def infrared(self):
+        return self.ME['infrared']
+
+    @property
+    def led_pin(self):
+        return self.ME['led_pin']
+
+    @property
+    def gnd_pin(self):
+        return self.ME['gnd_pin']
+
+
+class Constants(JSON):
+    data_root = 'data_root'
+    data_dir = os.environ['HOME'] + '/' + data_root
+    events_dir = data_dir + '/events/'
+    upload_dir = data_dir + '/uploads/'
+    temp_dir = data_dir + '/temp/'
+    false_dir = data_dir + '/false/'
+    done_dir = data_dir + '/done/'
+    me_url = os.environ['SITE'] + '/core/api/camera/me/'
+    logs_url = os.environ['SITE'] + '/core/api/logs/'
+    image_url = os.environ['SITE'] + '/core/api/image/'
+
+    headers = {
+        'Authorization': 'Token ' + os.environ['TOKEN'],
+        'Content-Type': 'application/json'
+    }
+    headers_im = {
+        'Authorization': 'Token ' + os.environ['TOKEN'],
+    }
+
+    def __init__(self):
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
+        if not os.path.exists(self.events_dir):
+            os.makedirs(self.events_dir)
+        if not os.path.exists(self.temp_dir):
+            os.makedirs(self.temp_dir)
+        if not os.path.exists(self.done_dir):
+            os.makedirs(self.done_dir)
+        self.update()
+
+    @property
+    def should_capture(self):
+        return self.ME['live']
+
+    @property
+    def should_update(self):
+        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
+            return False
+        return True
+
     def send_log(self, message):
         try:
             response = requests.post(self.logs_url, headers=self.headers, data=json.dumps({'message': message}))
@@ -338,7 +373,9 @@ class Constants:
             print(e.message)
 
     def update(self):
-        payload = {"remaining_storage": get_disk_usage(),
-                   'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}
+        payload = {
+            "remaining_storage": get_disk_usage(),
+            'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        }
         response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload))
         self.ME = json.loads(response.text)
