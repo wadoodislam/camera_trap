@@ -31,13 +31,13 @@ class Node(Constants):
 
             if self.should_capture:
                 self.event_id = uuid4().hex
-                frames = self.capture(self.motion_interval, True, False)
+                frames = self.capture(self.motion_interval)
                 movement_threshold = self.day_threshold if self.is_sunlight(datetime.now()) else self.night_threshold
                 is_motion, contours = self.motion_detection(frames, movement_threshold)
 
                 if is_motion:
                     self.send_log('Event: {}, max contour:{}'.format(self.event_id, contours))
-                    frames += self.capture(self.video_interval, False, True)
+                    frames += self.capture(self.video_interval)
                     self.make_event(frames)  # we can eliminate the additional validation and save some power
                 else:
                     self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
