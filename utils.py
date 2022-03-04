@@ -388,6 +388,6 @@ class Constants(JSON):
                 self.ME = file.write(json.dumps(self.ME, indent=4))
         except Exception:
             pass
-        with open(self.data_dir + 'ME.json', 'r') as file:
+        with open(self.data_dir + '/ME.json', 'r') as file:
             self.ME = json.loads(file.read())
 

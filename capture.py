@@ -27,30 +27,33 @@ class Node(Constants):
         self.setup_sensors()
 
         while True:
-            if self.should_capture:
-                self.night_vision(on=not self.is_sunlight(datetime.now()))
-                self.event_id = uuid4().hex
-                frames = self.capture(self.motion_interval)
-                GPIO.output(self.infrared, GPIO.LOW)
-                movement_threshold = self.day_threshold if self.is_sunlight(datetime.now()) else self.night_threshold
-                is_motion, contours = self.motion_detection(frames, movement_threshold)
 
-                if is_motion:
-                    self.night_vision(on=not self.is_sunlight(datetime.now()))
-                    frames += self.capture(self.video_interval)
-                    GPIO.output(self.infrared, GPIO.LOW)
-                    self.make_event(frames)  # we can eliminate the additional validation and save some power
-                    self.logs.append((self.event_id, contours))
-                else:
-                    if self.should_log:
-                        if self.logs:
-                            self.send_log("Events Captured: " + str(self.logs))
-                            self.logs = []
-                        self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
+            if not self.should_capture:
+                time.sleep(self.rest_interval)
+                continue
 
-                    time.sleep(self.rest_interval)
+            if not self.open_camera():
+                self.send_log("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
+                time.sleep(self.rest_interval)
+                continue
+
+            self.event_id = uuid4().hex
+            frames = self.capture(self.motion_interval)
+            is_motion, contours = self.motion_detection(frames)
+
+            if is_motion:
+                frames += self.capture(self.video_interval)
+                self.close_camera()
+                self.make_event(frames)
+                self.logs.append((self.event_id, contours))
             else:
-                time.sleep(self.video_interval)
+                self.close_camera()
+                if self.should_log:
+                    if self.logs:
+                        self.send_log("Events Captured: " + str(self.logs))
+                        self.logs = []
+                    self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
+                time.sleep(self.rest_interval)
 
     def make_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
@@ -63,11 +66,9 @@ class Node(Constants):
 
     def night_vision(self, on):
         if on:
-            GPIO.output(self.infrared, GPIO.HIGH)
             GPIO.output(self.led_pin, GPIO.HIGH)
             GPIO.output(self.gnd_pin, GPIO.LOW)
         else:
-            GPIO.output(self.infrared, GPIO.LOW)
             GPIO.output(self.led_pin, GPIO.LOW)
             GPIO.output(self.gnd_pin, GPIO.HIGH)
 
@@ -92,32 +93,33 @@ class Node(Constants):
     def rest(self):
         GPIO.output(self.infrared, GPIO.LOW)
 
+    def open_camera(self):
+        self.night_vision(on=not self.is_sunlight(datetime.now()))
+        self.infrared_switch(on=not self.is_sunlight(datetime.now()))
+
+        self.camera = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+        if self.camera.isOpened():
+            for skip in range(35):
+                _ = self.camera.read()
+
+            return True
+        return False
 
     def capture(self, interval):
         frames = []
-        cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+        for sec in range(interval):
+            ret_val, frame = self.camera.read()
+            if not self.is_sunlight(datetime.now()):
+                frame = ImageOperations.convert_image_to_gray(frame)
 
-        if cam.isOpened():
-            for skip in range(35):  # to discard over exposure frames
-                _ = cam.read()
+            frames.append((str(current_milli_time()) + '.jpg', frame))
 
-            for sec in range(interval):  # change for number of pictures
-                ret_val, frame = cam.read()
-                if not self.is_sunlight(datetime.now()):
-                    frame = ImageOperations.convert_image_to_gray(frame)
-
-                frames.append((str(current_milli_time()) + '.jpg', frame))
-
-                for skip in range(self.frames_per_sec - 1):
-                    _ = cam.read()
-
-            cam.release()
-        else:
-            self.send_log("Unable to open camera: " + datetime.now().strftime('%H:%M:%S'))
+            for skip in range(self.frames_per_sec - 1):
+                _ = self.camera.read()
 
         return frames
 
-    def motion_detection(self, frames, threshold):
+    def motion_detection(self, frames):
         max_contours = []
         _, first_frame = frames[0]
 
@@ -130,6 +132,8 @@ class Node(Constants):
             max_contour = max([cv2.contourArea(cnt) for cnt in cnts] or [0])
             max_contours.append(max_contour)
 
+            threshold = self.day_threshold if self.is_sunlight(datetime.now()) else self.night_threshold
+
             if threshold < max_contour:
                 return True, max_contour
 
@@ -137,6 +141,16 @@ class Node(Constants):
 
     def is_sunlight(self, dt):
         return self.sunrise.time() < dt.time() < self.sunset.time()
+
+    def infrared_switch(self, on):
+        if on:
+            GPIO.output(self.infrared, GPIO.HIGH)
+        else:
+            GPIO.output(self.infrared, GPIO.LOW)
+
+    def close_camera(self):
+        self.infrared_switch(on=False)
+        self.camera.release()
 
 
 if __name__ == "__main__":
