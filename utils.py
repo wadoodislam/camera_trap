@@ -384,7 +384,7 @@ class Constants(JSON):
             }
             response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload), timeout=10)
             self.ME = json.loads(response.text)
-            with open(self.data_dir + 'ME.json', 'w') as file:
+            with open(self.data_dir + '/ME.json', 'w') as file:
                 self.ME = file.write(response.text)
         except Exception:
             pass
