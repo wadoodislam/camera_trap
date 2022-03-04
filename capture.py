@@ -11,6 +11,7 @@ from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperat
 
 class Node(Constants):
     event_id = None
+    logs = []
 
     def setup_sensors(self):
         GPIO.setwarnings(False)
@@ -26,21 +27,27 @@ class Node(Constants):
         self.setup_sensors()
 
         while True:
-            self.rest()
-            self.night_vision(on=not self.is_sunlight(datetime.now()))
-
             if self.should_capture:
+                self.night_vision(on=not self.is_sunlight(datetime.now()))
                 self.event_id = uuid4().hex
                 frames = self.capture(self.motion_interval)
+                GPIO.output(self.infrared, GPIO.LOW)
                 movement_threshold = self.day_threshold if self.is_sunlight(datetime.now()) else self.night_threshold
                 is_motion, contours = self.motion_detection(frames, movement_threshold)
 
                 if is_motion:
-                    self.send_log('Event: {}, max contour:{}'.format(self.event_id, contours))
+                    self.night_vision(on=not self.is_sunlight(datetime.now()))
                     frames += self.capture(self.video_interval)
+                    GPIO.output(self.infrared, GPIO.LOW)
                     self.make_event(frames)  # we can eliminate the additional validation and save some power
+                    self.logs.append((self.event_id, contours))
                 else:
-                    self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
+                    if self.should_log:
+                        if self.logs:
+                            self.send_log("Events Captured: " + str(self.logs))
+                        self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
+
+                    time.sleep(self.rest_interval)
             else:
                 time.sleep(self.video_interval)
 
@@ -83,11 +90,7 @@ class Node(Constants):
 
     def rest(self):
         GPIO.output(self.infrared, GPIO.LOW)
-        start_time = time.time()
 
-        while time.time() - start_time < self.rest_interval:
-            if self.should_update:
-                self.update()
 
     def capture(self, interval):
         frames = []

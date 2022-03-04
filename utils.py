@@ -359,6 +359,10 @@ class Constants(JSON):
         return self.ME['live']
 
     @property
+    def should_log(self):
+        return self.ME['should_log']
+
+    @property
     def should_update(self):
         if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
             return False
@@ -373,9 +377,17 @@ class Constants(JSON):
             print(e.message)
 
     def update(self):
-        payload = {
-            "remaining_storage": get_disk_usage(),
-            'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        }
-        response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload))
-        self.ME = json.loads(response.text)
+        try:
+            payload = {
+                "remaining_storage": get_disk_usage(),
+                'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+            }
+            response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload), timeout=10)
+            self.ME = json.loads(response.text)
+            with open(self.data_dir + 'ME.json', 'w') as file:
+                self.ME = file.write(response.text)
+        except Exception:
+            pass
+        with open(self.data_dir + 'ME.json', 'r') as file:
+            self.ME = json.loads(file.read())
+
