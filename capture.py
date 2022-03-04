@@ -45,6 +45,7 @@ class Node(Constants):
                     if self.should_log:
                         if self.logs:
                             self.send_log("Events Captured: " + str(self.logs))
+                            self.logs = []
                         self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
 
                     time.sleep(self.rest_interval)
