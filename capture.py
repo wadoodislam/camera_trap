@@ -12,6 +12,7 @@ from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperat
 class Node(Constants):
     event_id = None
     logs = []
+    pir_pin = 7
 
     def setup_sensors(self):
         GPIO.setwarnings(False)
@@ -22,6 +23,7 @@ class Node(Constants):
         GPIO.setup(self.red_pin, GPIO.OUT)
         GPIO.setup(self.yellow_pin, GPIO.OUT)
         GPIO.setup(self.green_pin, GPIO.OUT)
+        GPIO.setup(self.pir_pin, GPIO.IN)
 
     def run(self):
         self.setup_sensors()
@@ -38,25 +40,33 @@ class Node(Constants):
                 continue
 
             self.event_id = uuid4().hex
+            pir_val = GPIO.input(7)
             frames = self.capture(self.motion_interval)
             is_motion, contours = self.motion_detection(frames)
 
             if is_motion:
                 frames += self.capture(self.video_interval)
                 self.close_camera()
-                self.make_event(frames)
+                self.make_event(frames, is_motion)
                 self.logs.append((self.event_id, contours))
             else:
                 self.close_camera()
+                if contours > 0 and pir_val == 1: # save the event in false folder
+                    self.make_event(frames, is_motion)                    
+                
                 if self.should_log:
                     if self.logs:
-                        self.send_log("Events Captured: " + str(self.logs))
+                        self.send_log('Events Captured: {}, PIR:{}'.format(str(self.logs), pir_val))
                         self.logs = []
-                    self.send_log('Event: {}, max contours:{}'.format(self.event_id, contours))
+                    self.send_log('Event: {}, max contours:{}, PIR:{}'.format(self.event_id, contours, pir_val))
                 time.sleep(self.rest_interval)
 
-    def make_event(self, frames):
-        event_path = os.path.join(self.events_dir, self.event_id)
+    def make_event(self, frames, ismotion=True):
+        if ismotion:
+            event_path = os.path.join(self.events_dir, self.event_id)
+        else:
+            event_path = os.path.join(self.false_dir, self.event_id)
+
 
         if not os.path.exists(event_path):
             os.makedirs(event_path)
