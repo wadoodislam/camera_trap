@@ -154,4 +154,8 @@ class Node(Constants):
 
 
 if __name__ == "__main__":
-    Node().run()
+    node = Node()
+    try:
+        node.run()
+    except KeyboardInterrupt:
+        node.close_camera()

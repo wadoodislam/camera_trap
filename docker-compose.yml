@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+
+  capture:
+    container_name: trap-capture
+    build:
+      context: .
+    command: which python
+#    env_file:
+#      - dockerfiles/.env
+    volumes:
+      - ./dataroot:/src/dataroot
+
+  upload:
+    container_name: trap-upload
+    labels:
+      name: Upload
+      description: Python 3 using Jupyter Notebooks
+    build:
+      context: .
+    command: echo &HOME
+#    env_file:
+#      - dockerfiles/.env
+    volumes:
+      - ./dataroot:/src/dataroot

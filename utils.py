@@ -15,7 +15,6 @@ def gstreamer_pipeline(capture_width=1280, capture_height=720,
                        display_height=540,
                        framerate=30,
                        flip_method=0,
-
                        ):
     return (
 
@@ -370,7 +369,8 @@ class Constants(JSON):
 
     def send_log(self, message):
         try:
-            response = requests.post(self.logs_url, headers=self.headers, data=json.dumps({'message': message}))
+            response = requests.post(self.logs_url, headers=self.headers, timeout=10,
+                                     data=json.dumps({'message': message}))
             if response.status_code != 201:
                 print(response.text)
         except Exception as e:
