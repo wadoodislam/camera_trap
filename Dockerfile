@@ -5,7 +5,7 @@ WORKDIR /src/
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 RUN apt-get upgrade && apt-get update
-RUN apt-get install python3-pip
+RUN apt-get install python3-pip -y
 COPY . .
 #COPY requirements.txt requirements.txt
 
