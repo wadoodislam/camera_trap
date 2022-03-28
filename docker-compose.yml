@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.3"
 
 services:
 
@@ -11,6 +11,7 @@ services:
 #      - dockerfiles/.env
     volumes:
       - ./dataroot:/src/dataroot
+      - /sys/class/gpio:/sys/class/gpio
 
   upload:
     container_name: trap-upload
