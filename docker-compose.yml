@@ -25,4 +25,5 @@ services:
 #    env_file:
 #      - dockerfiles/.env
     volumes:
-      - ./dataroot:/src/dataroot
+      - ./:/src/
+      - /sys/class/gpio:/sys/class/gpio
