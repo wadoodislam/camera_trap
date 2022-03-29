@@ -52,8 +52,8 @@ class Node(Constants):
             else:
                 self.close_camera()
                 if contours > 0 and pir_val == 1: # save the event in false folder
-                    self.make_event(frames, is_motion)                    
-                
+                    self.make_event(frames, is_motion)
+
                 if self.should_log:
                     if self.logs:
                         self.send_log('Events Captured: {}, PIR:{}'.format(str(self.logs), pir_val))
@@ -166,6 +166,7 @@ class Node(Constants):
 if __name__ == "__main__":
     node = Node()
     try:
+        print('Script entered')
         node.run()
     except KeyboardInterrupt:
         node.close_camera()

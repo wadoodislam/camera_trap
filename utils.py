@@ -324,7 +324,7 @@ class JSON:
 
 class Constants(JSON):
     data_root = 'data_root'
-    data_dir = os.environ['HOME'] + '/' + data_root
+    data_dir = os.getcwd() + '/' + data_root
     events_dir = data_dir + '/events/'
     upload_dir = data_dir + '/uploads/'
     temp_dir = data_dir + '/temp/'
