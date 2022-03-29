@@ -3,6 +3,8 @@ FROM nvcr.io/nvidia/l4t-base:r32.4.3
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+ENV OPENBLAS_CORETYPE ARMV8
+
 WORKDIR /src/
 
 RUN apt-get upgrade && apt-get update
