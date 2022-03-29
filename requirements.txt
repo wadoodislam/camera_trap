@@ -1,3 +1,4 @@
 psutil
 Jetson.GPIO
 opencv-python
+requests
