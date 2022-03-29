@@ -8,8 +8,9 @@ services:
       context: .
     privileged: true
     command: python3 capture.py
-#    env_file:
-#      - dockerfiles/.env
+    environment:
+        - SITE=${SITE}
+        - TOKEN=${TOKEN}
     volumes:
       - ./:/src/
       - /sys/class/gpio:/sys/class/gpio
