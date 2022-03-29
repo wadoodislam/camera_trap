@@ -6,7 +6,8 @@ services:
     container_name: trap-capture
     build:
       context: .
-    command: which python
+    privileged: true
+    command: python3 capture.py
 #    env_file:
 #      - dockerfiles/.env
     volumes:

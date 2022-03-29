@@ -1,1 +1,3 @@
 psutil
+Jetson.GPIO
+opencv-python
