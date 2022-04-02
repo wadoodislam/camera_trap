@@ -4,6 +4,9 @@ services:
 
   capture:
     container_name: trap-capture
+    labels:
+      name: Capture
+      description: Python 3 using Jupyter Notebooks
     build:
       context: .
     privileged: true
@@ -14,6 +17,8 @@ services:
     volumes:
       - ./:/src/
       - /sys/class/gpio:/sys/class/gpio
+      - /tmp/.X11-unix/:/tmp/.X11-unix/
+      - /tmp/argus_socket:/tmp/argus_socket
 
   upload:
     container_name: trap-upload
@@ -23,8 +28,9 @@ services:
     build:
       context: .
     command: echo &HOME
-#    env_file:
-#      - dockerfiles/.env
+    environment:
+      - SITE=${SITE}
+      - TOKEN=${TOKEN}
     volumes:
       - ./:/src/
       - /sys/class/gpio:/sys/class/gpio
