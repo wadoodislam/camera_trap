@@ -14,6 +14,7 @@ services:
     environment:
         - SITE=${SITE}
         - TOKEN=${TOKEN}
+        - DISPLAY=${DISPLAY}
     ipc: host
     network_mode: "host"
     cap_add:
@@ -23,6 +24,7 @@ services:
       - /sys/class/gpio:/sys/class/gpio
       - /tmp/.X11-unix/:/tmp/.X11-unix/
       - /tmp/argus_socket:/tmp/argus_socket
+
 
   upload:
     container_name: trap-upload
