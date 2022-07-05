@@ -51,7 +51,7 @@ class Node(Constants):
                 self.logs.append((self.event_id, contours))
             else:
                 self.close_camera()
-                if is_motion and pir_val == 1: # save the event in false folder
+                if any(c > 0 for c in contours) and pir_val == 1:  # save the event in false folder
                     self.make_event(frames, is_motion)
 
                 if self.should_log:

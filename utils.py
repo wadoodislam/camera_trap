@@ -38,10 +38,6 @@ def gstreamer_pipeline(capture_width=1280, capture_height=720,
 
 def dt_parse(t):
     ret = datetime.strptime(t[:19], '%Y-%m-%dT%H:%M:%S')
-    # if t[-6] == '+':
-    #     ret += timedelta(hours=int(t[-5:-3]), minutes=int(t[-2:]))
-    # elif t[-6] == '-':
-    #     ret -= timedelta(hours=int(t[-5:-3]), minutes=int(t[-2:]))
     return ret
 
 
