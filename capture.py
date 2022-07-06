@@ -2,14 +2,14 @@ import os
 import time
 from datetime import datetime
 from uuid import uuid4
-
+import sqlite3
 import Jetson.GPIO as GPIO
 import cv2
 
 from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperations
 
 
-class Node(Constants):
+class Capture(Constants):
     event_id = None
     logs = []
     pir_pin = 7
@@ -18,12 +18,12 @@ class Node(Constants):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.infrared, GPIO.OUT)
-        GPIO.setup(self.led_pin, GPIO.OUT)
-        GPIO.setup(self.gnd_pin, GPIO.OUT)
-        GPIO.setup(self.red_pin, GPIO.OUT)
-        GPIO.setup(self.yellow_pin, GPIO.OUT)
-        GPIO.setup(self.green_pin, GPIO.OUT)
-        GPIO.setup(self.pir_pin, GPIO.IN)
+        self.pwm_obj = GPIO.PWM(self.infrared, 100)
+        self.pwm_obj.start(0)
+        GPIO.setup(self.filter_a, GPIO.OUT)
+        GPIO.setup(self.filter_b, GPIO.OUT)
+        GPIO.setup(self.motion1, GPIO.IN)
+        GPIO.setup(self.motion2, GPIO.IN)
 
     def run(self):
         self.setup_sensors()
@@ -40,7 +40,7 @@ class Node(Constants):
                 continue
 
             self.event_id = uuid4().hex
-            pir_val = GPIO.input(7)
+            motion1, motion2 = GPIO.input(self.motion1), GPIO.input(self.motion2)
             frames = self.capture(self.motion_interval)
             is_motion, contours = self.motion_detection(frames)
 
@@ -51,14 +51,12 @@ class Node(Constants):
                 self.logs.append((self.event_id, contours))
             else:
                 self.close_camera()
-                if any(c > 0 for c in contours) and pir_val == 1:  # save the event in false folder
-                    self.make_event(frames, is_motion)
 
                 if self.should_log:
                     if self.logs:
-                        self.send_log('Events Captured: {}, PIR:{}'.format(str(self.logs), pir_val))
+                        self.send_log('Events Captured: {}, Motion Sen:{}'.format(str(self.logs), motion1+motion2))
                         self.logs = []
-                    self.send_log('Event: {}, max contours:{}, PIR:{}'.format(self.event_id, contours, pir_val))
+                    self.send_log('Event: {}, max contours:{}, Motion Sen:{}'.format(self.event_id, contours, motion1+motion2))
                 time.sleep(self.rest_interval)
 
     def make_event(self, frames, ismotion=True):
@@ -66,7 +64,6 @@ class Node(Constants):
             event_path = os.path.join(self.events_dir, self.event_id)
         else:
             event_path = os.path.join(self.false_dir, self.event_id)
-
 
         if not os.path.exists(event_path):
             os.makedirs(event_path)
@@ -76,32 +73,11 @@ class Node(Constants):
 
     def night_vision(self, on):
         if on:
-            GPIO.output(self.led_pin, GPIO.HIGH)
-            GPIO.output(self.gnd_pin, GPIO.LOW)
+            GPIO.output(self.filter_a, GPIO.HIGH)
+            GPIO.output(self.filter_b, GPIO.LOW)
         else:
-            GPIO.output(self.led_pin, GPIO.LOW)
-            GPIO.output(self.gnd_pin, GPIO.HIGH)
-
-    def green_on(self):
-        GPIO.output(self.green_pin, GPIO.HIGH)
-
-    def yellow_on(self):
-        GPIO.output(self.yellow_pin, GPIO.HIGH)
-
-    def red_on(self):
-        GPIO.output(self.red_pin, GPIO.HIGH)
-
-    def green_off(self):
-        GPIO.output(self.green_pin, GPIO.LOW)
-
-    def yellow_off(self):
-        GPIO.output(self.yellow_pin, GPIO.LOW)
-
-    def red_off(self):
-        GPIO.output(self.red_pin, GPIO.LOW)
-
-    def rest(self):
-        GPIO.output(self.infrared, GPIO.LOW)
+            GPIO.output(self.filter_a, GPIO.LOW)
+            GPIO.output(self.filter_b, GPIO.HIGH)
 
     def open_camera(self):
         self.night_vision(on=not self.is_sunlight(datetime.now()))
@@ -154,9 +130,9 @@ class Node(Constants):
 
     def infrared_switch(self, on):
         if on:
-            GPIO.output(self.infrared, GPIO.HIGH)
+            self.pwm_obj.ChangeDutyCycle(self.pwm)
         else:
-            GPIO.output(self.infrared, GPIO.LOW)
+            self.pwm_obj.ChangeDutyCycle(0)
 
     def close_camera(self):
         self.infrared_switch(on=False)
@@ -164,8 +140,8 @@ class Node(Constants):
 
 
 if __name__ == "__main__":
-    node = Node()
+    capture = Capture()
     try:
-        node.run()
+        capture.run()
     except KeyboardInterrupt:
-        node.close_camera()
+        capture.close_camera()

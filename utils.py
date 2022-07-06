@@ -294,28 +294,28 @@ class JSON:
         return self.ME['frames_per_sec']
 
     @property
-    def red_pin(self):
-        return self.ME['red_pin']
+    def pwm(self):
+        return self.ME['pwm']
 
     @property
-    def yellow_pin(self):
-        return self.ME['yellow_pin']
+    def motion2(self):
+        return self.ME['motion_2']
 
     @property
-    def green_pin(self):
-        return self.ME['green_pin']
+    def motion1(self):
+        return self.ME['motion_1']
 
     @ property
     def infrared(self):
         return self.ME['infrared']
 
     @property
-    def led_pin(self):
-        return self.ME['led_pin']
+    def filter_a(self):
+        return self.ME['filter_a']
 
     @property
-    def gnd_pin(self):
-        return self.ME['gnd_pin']
+    def filter_b(self):
+        return self.ME['filter_b']
 
 
 class Constants(JSON):
