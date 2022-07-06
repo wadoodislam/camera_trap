@@ -17,12 +17,12 @@ class Monitor(Constants):
 
     def run(self):
         while True:
-            if self.should_fetch:
+            if self.params_expired:
                 self.fetch_params()
                 self.send_logs()
 
     @property
-    def should_fetch(self):
+    def params_expired(self):
         return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
 
     def fetch_params(self):
@@ -42,12 +42,13 @@ class Monitor(Constants):
     def send_logs(self):
         with self.db:
             clogs, ulogs = self.db.get_pending_logs()
-            logs = format_logs(clogs, ulogs)
 
-            response = requests.request("POST", self.logs_url, headers=self.headers,
-                                        data=json.dumps(logs), timeout=10)
-            if response.status_code == 201:
-                self.db.mark_done(clogs, ulogs)
+        logs = format_logs(clogs, ulogs)
+        response = requests.request("POST", self.logs_url, headers=self.headers,
+                                    data=json.dumps(logs), timeout=10)
+        if response.status_code == 201:
+            with self.db:
+                self.db.delete_done(clogs, ulogs)
 
 
 if __name__ == "__main__":

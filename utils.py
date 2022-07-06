@@ -261,7 +261,7 @@ class JSON:
 
     @property
     def motion_interval(self):
-        return self.ME['motion_interval']\
+        return self.ME['motion_interval']
 
     @ property
     def rest_interval(self):
@@ -307,7 +307,7 @@ class JSON:
     def motion1(self):
         return self.ME['motion_1']
 
-    @ property
+    @property
     def infrared(self):
         return self.ME['infrared']
 
@@ -360,14 +360,14 @@ class Constants(JSON):
         return self.ME['should_log']
 
     @property
-    def refresh(self):
+    def params_expired(self):
         return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
 
-    def log(self, values):
+    def put_log(self, values):
         with self.db:
             self.db.data_entry(self.table, values)
 
-    def get_params(self):
+    def read_params(self):
         with open(self.data_dir + '/ME.json', 'r') as file:
             self.ME = json.loads(file.read())
 

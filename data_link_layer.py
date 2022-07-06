@@ -38,12 +38,12 @@ class SQLite:
         upload_logs = [row for row in c.fetchall()]
         return capture_logs, upload_logs
 
-    def mark_done(self, clogs, ulogs):
+    def delete_done(self, clogs, ulogs):
         c = self._db_conn.cursor()
         cdates = ','.join([f'"{row[0]}"' for row in clogs])
-        c.execute(f'UPDATE capture_logs SET pending = 0 WHERE datestamp IN ({cdates})')
+        c.execute(f'DELETE FROM capture_logs WHERE datestamp IN ({cdates})')
         udates = ','.join([f'"{row[0]}"' for row in ulogs])
-        c.execute(f'UPDATE upload_logs SET pending = 0 WHERE datestamp IN ({udates})')
+        c.execute(f'DELETE FROM upload_logs WHERE datestamp IN ({udates})')
         return
 
 
