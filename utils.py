@@ -9,6 +9,8 @@ import numpy as np
 import psutil
 import requests
 
+from data_link_layer import SQLite
+
 
 def gstreamer_pipeline(capture_width=1280, capture_height=720,
                        display_width=960,
@@ -339,6 +341,7 @@ class Constants(JSON):
     }
 
     def __init__(self):
+        self.db = SQLite("local.db", 5)
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
         if not os.path.exists(self.events_dir):
@@ -347,10 +350,9 @@ class Constants(JSON):
             os.makedirs(self.temp_dir)
         if not os.path.exists(self.done_dir):
             os.makedirs(self.done_dir)
-        self.update()
 
     @property
-    def should_capture(self):
+    def live(self):
         return self.ME['live']
 
     @property
@@ -358,32 +360,18 @@ class Constants(JSON):
         return self.ME['should_log']
 
     @property
-    def should_update(self):
-        if datetime.now() < self.last_reported_at + timedelta(seconds=self.update_after):
-            return False
-        return True
+    def refresh(self):
+        return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
 
-    def send_log(self, message):
-        try:
-            response = requests.post(self.logs_url, headers=self.headers, timeout=10,
-                                     data=json.dumps({'message': message}))
-            if response.status_code != 201:
-                print(response.text)
-        except Exception as e:
-            print(e.message)
+    def log(self, values):
+        with self.db:
+            self.db.data_entry(self.table, values)
 
-    def update(self):
-        try:
-            payload = {
-                "remaining_storage": get_disk_usage(),
-                'last_reported_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-            }
-            response = requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload), timeout=10)
-            self.ME = json.loads(response.text)
-            with open(self.data_dir + '/ME.json', 'w') as file:
-                self.ME = file.write(json.dumps(self.ME, indent=4))
-        except Exception:
-            pass
+    def get_params(self):
         with open(self.data_dir + '/ME.json', 'r') as file:
             self.ME = json.loads(file.read())
 
+
+def format_logs(clogs, ulogs):
+    logs = [{"activity": c[1], "script": 'CAPTURE', "message": c[3], "logged_at": c[0]} for c in clogs]
+    return logs + [{"activity": u[1], "script": 'UPLOAD', "message": u[3], "logged_at": u[0]} for u in ulogs]
