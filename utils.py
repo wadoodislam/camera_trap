@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import cv2
 import numpy as np
 import psutil
-import requests
 
 from data_link_layer import SQLite
 
@@ -341,7 +340,9 @@ class Constants(JSON):
     }
 
     def __init__(self):
+        self.read_params()
         self.db = SQLite("local.db", 5)
+
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
         if not os.path.exists(self.events_dir):
@@ -364,8 +365,9 @@ class Constants(JSON):
         return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
 
     def put_log(self, values):
-        with self.db:
-            self.db.data_entry(self.table, values)
+        if self.should_log:
+            with self.db:
+                self.db.data_entry(self.table, values)
 
     def read_params(self):
         with open(self.data_dir + '/ME.json', 'r') as file:

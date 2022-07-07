@@ -16,22 +16,26 @@ class Capture(Constants):
     def __init__(self):
         super().__init__()
         self.read_params()
-        self.setup_sensors()
 
         with self.db:
             self.db.create_tables()
+
+        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
+        self.setup_sensors()
 
     def run(self):
         while True:
             if self.params_expired:
                 self.read_params()
+                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                              '"ALIVE"', '1', f'"Capture Alive"'])
 
             if not self.live:
                 time.sleep(self.rest_interval)
                 continue
 
             if not self.open_camera():
-                self.put_log([f'"{datetime.now().strftime("%d-%m-%Y %H:%M:%S")}"',
+                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                               '"CAMERA_ERROR"', '1', '"Unable to open camera!"'])
                 time.sleep(self.rest_interval)
                 continue
@@ -51,8 +55,6 @@ class Capture(Constants):
                               f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])
             else:
                 self.close_camera()
-                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"CHECKED_MOTION"', '1',
-                              f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])
                 time.sleep(self.rest_interval)
 
     def open_camera(self):

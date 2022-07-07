@@ -11,36 +11,23 @@ from utils import ImageOperations
 
 
 class UploadManager(Constants):
+    table = 'upload_logs'
 
-    def send_image(self, event, item, width, height):
-        item_path = os.path.join(self.events_dir, event, item)
-        file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
-        im = cv2.imread(item_path)
-        # add footer here
-        short_txt, long_txt = self.get_copy_rights(file_dt)
-        im = ImageOperations.addFooter(im, short_txt, long_txt)
-        temp_item_path = os.path.join(self.temp_dir, item)
-        file, ext = os.path.splitext(temp_item_path)
-        im_resize = cv2.resize(im, (width, height))
-        cv2.imwrite(file + '.jpg', im_resize,  [cv2.IMWRITE_JPEG_QUALITY, 90])
-        payload = {'uuid': event, 'date': time.strftime("%Y-%m-%d", time.localtime())}
-        files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
-        try:
-            response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
-            if response.status_code == 201:
-                self.send_log('Upload success for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
-                return True
-        except Exception as e:
-            pass
+    def __init__(self):
+        super().__init__()
+        self.read_params()
 
-        self.send_log('Upload failed for Event "{}" & Image Time: "{}" with'.format(event, file_dt))
-        return False
+        with self.db:
+            self.db.create_tables()
+
+        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Upload Started"'])
 
     def run(self):
-        print('checking for uploads...')
         while True:
-            if self.should_update:
-               self.update()
+            if self.params_expired:
+                self.read_params()
+                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                               '"ALIVE"', '1', f'"Capture Alive"'])
 
             events = os.listdir(self.events_dir)
             if not events:
@@ -56,13 +43,37 @@ class UploadManager(Constants):
                 else:
                     shutil.rmtree(os.path.join(self.events_dir, event))
 
+    def send_image(self, event, item, width, height):
+        item_path = os.path.join(self.events_dir, event, item)
+        file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
+        im = cv2.imread(item_path)
+        short_txt, long_txt = self.get_copy_rights(file_dt)
+        im = ImageOperations.addFooter(im, short_txt, long_txt)
+        temp_item_path = os.path.join(self.temp_dir, item)
+        file, ext = os.path.splitext(temp_item_path)
+        im_resize = cv2.resize(im, (width, height))
+        cv2.imwrite(file + '.jpg', im_resize,  [cv2.IMWRITE_JPEG_QUALITY, 90])
+        payload = {'uuid': event, 'date': time.strftime("%Y-%m-%d", time.localtime())}
+        files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
+        try:
+            response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
+            if response.status_code == 201:
+                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                              '"UPLOAD_SUCCESS"', '1', f'"UUID: {event} & Image At: {file_dt}"'])
+                return True
+        except Exception as e:
+            pass
+
+        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                      '"UPLOAD_FAILED"', '1', f'"UUID: {event} & Image At: {file_dt}"'])
+        return False
+
     def move_to_done(self, event, item):
         item_path = os.path.join(self.events_dir, event, item)
         done_item_path = os.path.join(self.done_dir, event)
         if not os.path.exists(done_item_path):
             os.makedirs(done_item_path)
         shutil.move(item_path, os.path.join(done_item_path, item))
-        print('uploaded: ' + os.path.join(done_item_path, item))
 
     def get_copy_rights(self, file_dt):
         long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + self.name + '     ' + 'POWERED BY LUMS'
