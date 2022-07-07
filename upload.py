@@ -26,8 +26,13 @@ class UploadManager(Constants):
         while True:
             if self.params_expired:
                 self.read_params()
-                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
-                               '"ALIVE"', '1', f'"Capture Alive"'])
+                if self.logging:
+                    self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                                   '"ALIVE"', '1', f'"Upload Alive"'])
+                    self.logging = False
+            else:
+                self.logging = True
+
 
             events = os.listdir(self.events_dir)
             if not events:

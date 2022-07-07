@@ -351,6 +351,8 @@ class Constants(JSON):
         if not os.path.exists(self.done_dir):
             os.makedirs(self.done_dir)
 
+        self.logging = True
+
     @property
     def live(self):
         return self.ME['live']
@@ -361,7 +363,9 @@ class Constants(JSON):
 
     @property
     def params_expired(self):
-        return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
+        rn = datetime.now()
+        future = self.last_reported_at + timedelta(seconds=self.update_after)
+        return rn > future
 
     def put_log(self, values):
         if self.should_log:

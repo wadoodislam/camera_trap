@@ -1,4 +1,4 @@
-version: "3.9"
+version: "2.3"
 
 services:
 
@@ -9,8 +9,9 @@ services:
       description: Python 3 using Jupyter Notebooks
     build:
       context: .
+    runtime: nvidia
     privileged: true
-    command: python3 capture.py
+    command: python3
     environment:
         - SITE=${SITE}
         - TOKEN=${TOKEN}

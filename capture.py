@@ -27,8 +27,12 @@ class Capture(Constants):
         while True:
             if self.params_expired:
                 self.read_params()
-                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
-                              '"ALIVE"', '1', f'"Capture Alive"'])
+                if self.logging:
+                    self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                                  '"ALIVE"', '1', f'"Capture Alive"'])
+                    self.logging = False
+            else:
+                self.logging = True
 
             if not self.live:
                 time.sleep(self.rest_interval)

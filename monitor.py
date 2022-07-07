@@ -21,10 +21,6 @@ class Monitor(Constants):
                 self.fetch_params()
                 self.send_logs()
 
-    @property
-    def params_expired(self):
-        return datetime.now() > self.last_reported_at + timedelta(seconds=self.update_after)
-
     def fetch_params(self):
         try:
             payload = {
