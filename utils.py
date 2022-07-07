@@ -340,7 +340,6 @@ class Constants(JSON):
     }
 
     def __init__(self):
-        self.read_params()
         self.db = SQLite("local.db", 5)
 
         if not os.path.exists(self.data_dir):
