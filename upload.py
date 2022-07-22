@@ -62,7 +62,7 @@ class UploadManager(Constants):
         files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
         try:
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
-            if response.status_code == 201:
+            if response.status_code in [201, 208]:
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                               '"UPLOAD_SUCCESS"', '1', f'"UUID: {event} & Image At: {file_dt}"'])
                 return True
