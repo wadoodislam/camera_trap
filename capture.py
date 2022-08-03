@@ -38,11 +38,8 @@ class Capture(Constants):
                 time.sleep(self.rest_interval)
                 continue
 
-            if not self.open_camera():
-                self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
-                              '"CAMERA_ERROR"', '1', '"Unable to open camera!"'])
-                time.sleep(self.rest_interval)
-                continue
+            self.night_vision(on=not self.is_sunlight(datetime.now()))
+            self.infrared_switch(on=not self.is_sunlight(datetime.now()))
 
             pir1, pir2 = GPIO.input(self.motion1), GPIO.input(self.motion2)
 
@@ -53,18 +50,14 @@ class Capture(Constants):
 
             if is_motion:
                 frames += self.capture(self.video_interval)
-                self.close_camera()
                 self.write_event(frames)
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"EVENT_CAPTURED"', '1',
                               f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])
             else:
-                self.close_camera()
+                self.infrared_switch(on=False)
                 time.sleep(self.rest_interval)
 
     def open_camera(self):
-        self.night_vision(on=not self.is_sunlight(datetime.now()))
-        self.infrared_switch(on=not self.is_sunlight(datetime.now()))
-
         self.camera = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
         if self.camera.isOpened():
             for skip in range(35):
@@ -152,6 +145,10 @@ class Capture(Constants):
 if __name__ == "__main__":
     capture = Capture()
     try:
-        capture.run()
+        if capture.open_camera():
+            capture.run()
+        else:
+            capture.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                             '"CAMERA_ERROR"', '1', '"Unable to open camera!"'])
     except KeyboardInterrupt:
         capture.close_camera()
