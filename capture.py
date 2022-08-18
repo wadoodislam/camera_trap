@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from datetime import datetime
@@ -35,25 +36,25 @@ class Capture(Constants):
                 self.logging = True
 
             if not self.live:
-                time.sleep(self.rest_interval)
                 continue
+
+            self.event_id = uuid4().hex
+            pir1, pir2 = GPIO.input(self.motion1), GPIO.input(self.motion2)
 
             self.night_vision(on=not self.is_sunlight(datetime.now()))
             self.infrared_switch(on=not self.is_sunlight(datetime.now()))
-
-            pir1, pir2 = GPIO.input(self.motion1), GPIO.input(self.motion2)
-
-            self.event_id = uuid4().hex
-
+            logging.debug(f'Polling for Motion {datetime.now().strftime("%H:%M:%S")}')
             frames = self.capture(self.motion_interval)
             is_motion, contours = self.motion_detection(frames)
 
             if is_motion:
+                logging.debug(f'Motion Detected and Capturing Started at {datetime.now().strftime("%H:%M:%S")}')
                 frames += self.capture(self.video_interval)
                 self.write_event(frames)
+                logging.debug(f'Event Captured at {datetime.now().strftime("%H:%M:%S")}')
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"EVENT_CAPTURED"', '1',
                               f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])
-            else:
+            elif not self.is_sunlight(datetime.now()):
                 self.infrared_switch(on=False)
                 time.sleep(self.rest_interval)
 

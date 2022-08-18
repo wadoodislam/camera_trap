@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import os
 import time
@@ -373,8 +374,11 @@ class Constants(JSON):
                 self.db.data_entry(self.table, values)
 
     def read_params(self):
-        with open(self.data_dir + '/ME.json', 'r') as file:
-            self.ME = json.loads(file.read())
+        try:
+            with open(self.data_dir + '/ME.json', 'r') as file:
+                self.ME = json.loads(file.read())
+        except IOError as e:
+            logging.debug("Couldn't find/open ME.json file.")
 
 
 def format_logs(clogs, ulogs):
