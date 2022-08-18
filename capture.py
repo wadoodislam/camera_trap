@@ -43,7 +43,8 @@ class Capture(Constants):
 
             self.night_vision(on=not self.is_sunlight(datetime.now()))
             self.infrared_switch(on=not self.is_sunlight(datetime.now()))
-            logging.debug(f'Polling for Motion {datetime.now().strftime("%H:%M:%S")}')
+            print(f'{datetime.now().strftime("%H:%M:%S")}: Polling for Motion [Print]')
+            logging.info(f'{datetime.now().strftime("%H:%M:%S")}: Polling for Motion [logging]')
             frames = self.capture(self.motion_interval)
             is_motion, contours = self.motion_detection(frames)
 
