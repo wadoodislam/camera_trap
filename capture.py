@@ -144,6 +144,8 @@ class Capture(Constants):
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
     capture = Capture()
     try:
         if capture.open_camera():
