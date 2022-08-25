@@ -58,7 +58,7 @@ class UploadManager(Constants):
         file, ext = os.path.splitext(temp_item_path)
         im_resize = cv2.resize(im, (width, height))
         cv2.imwrite(file + '.jpg', im_resize,  [cv2.IMWRITE_JPEG_QUALITY, 90])
-        payload = {'uuid': event, 'date': time.strftime("%Y-%m-%d", time.localtime())}
+        payload = {'uuid': event, 'date': str(file_dt)}
         files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
         try:
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
