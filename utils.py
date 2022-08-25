@@ -377,6 +377,7 @@ class Constants(JSON):
         try:
             with open(self.data_dir + '/ME.json', 'r') as file:
                 self.ME = json.loads(file.read())
+            logging.debug("ME.json loaded.")
         except IOError as e:
             logging.debug("Couldn't find/open ME.json file.")
 

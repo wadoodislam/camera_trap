@@ -16,10 +16,13 @@ class Capture(Constants):
 
     def __init__(self):
         super().__init__()
+        logging.info('Script Started')
         self.read_params()
 
         with self.db:
             self.db.create_tables()
+
+        logging.info(f'Checked Tables')
 
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
         self.setup_sensors()
@@ -43,16 +46,15 @@ class Capture(Constants):
 
             self.night_vision(on=not self.is_sunlight(datetime.now()))
             self.infrared_switch(on=not self.is_sunlight(datetime.now()))
-            print(f'{datetime.now().strftime("%H:%M:%S")}: Polling for Motion [Print]')
-            logging.info(f'{datetime.now().strftime("%H:%M:%S")}: Polling for Motion [logging]')
+            logging.info('Polling for Motion')
             frames = self.capture(self.motion_interval)
             is_motion, contours = self.motion_detection(frames)
 
             if is_motion:
-                logging.debug(f'Motion Detected and Capturing Started at {datetime.now().strftime("%H:%M:%S")}')
+                logging.debug(f'Motion Detected and Capturing Started')
                 frames += self.capture(self.video_interval)
                 self.write_event(frames)
-                logging.debug(f'Event Captured at {datetime.now().strftime("%H:%M:%S")}')
+                logging.debug(f'Event captured with contours {contours}')
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"EVENT_CAPTURED"', '1',
                               f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])
             elif not self.is_sunlight(datetime.now()):
@@ -145,8 +147,7 @@ class Capture(Constants):
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s - capture:%(levelname)s - %(message)s', level=logging.DEBUG)
     capture = Capture()
     try:
         if capture.open_camera():
@@ -154,5 +155,6 @@ if __name__ == "__main__":
         else:
             capture.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                              '"CAMERA_ERROR"', '1', '"Unable to open camera!"'])
+            logging.error('Unable to open camera!')
     except KeyboardInterrupt:
         capture.close_camera()

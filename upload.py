@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 import time
 from datetime import datetime
 
@@ -15,11 +16,13 @@ class UploadManager(Constants):
 
     def __init__(self):
         super().__init__()
+        logging.info('Script Started')
         self.read_params()
 
         with self.db:
             self.db.create_tables()
 
+        logging.info(f'Checked Tables')
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Upload Started"'])
 
     def run(self):
@@ -65,12 +68,15 @@ class UploadManager(Constants):
             if response.status_code in [201, 208]:
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                               '"UPLOAD_SUCCESS"', '1', f'"UUID: {event} & Image At: {file_dt}"'])
+                logging.info(f'Successfully Uploaded Image At: {file_dt}')
                 return True
         except Exception as e:
+            logging.info(f'Successfully Uploaded Image At: {file_dt}')
             pass
 
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                       '"UPLOAD_FAILED"', '1', f'"UUID: {event} & Image At: {file_dt}"'])
+
         return False
 
     def move_to_done(self, event, item):
@@ -87,4 +93,5 @@ class UploadManager(Constants):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - upload:%(levelname)s - %(message)s', level=logging.DEBUG)
     UploadManager().run()

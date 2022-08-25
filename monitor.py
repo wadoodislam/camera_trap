@@ -1,3 +1,4 @@
+import logging
 import json
 from datetime import datetime, timedelta
 
@@ -10,10 +11,13 @@ class Monitor(Constants):
 
     def __init__(self):
         super(Monitor, self).__init__()
+        logging.info('Script Started')
         self.fetch_params()
 
         with self.db:
             self.db.create_tables()
+
+        logging.info(f'Checked Tables')
 
     def run(self):
         while True:
@@ -32,7 +36,10 @@ class Monitor(Constants):
             self.ME = json.loads(response.text)
             with open(self.data_dir + '/ME.json', 'w') as file:
                 file.write(json.dumps(self.ME, indent=4))
+
+            logging.info(f'Fetched ME.json')
         except Exception:
+            logging.warn(f'Error while fetching ME.json')
             pass
 
     def send_logs(self):
@@ -43,9 +50,11 @@ class Monitor(Constants):
         response = requests.request("POST", self.logs_url, headers=self.headers,
                                     data=json.dumps(logs), timeout=10)
         if response.status_code == 201:
+            logging.info(f'Logs uploaded successfully')
             with self.db:
                 self.db.delete_done(clogs, ulogs)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - monitor:%(levelname)s - %(message)s', level=logging.DEBUG)
     Monitor().run()
