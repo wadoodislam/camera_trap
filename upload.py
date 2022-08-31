@@ -33,7 +33,6 @@ class UploadManager(Constants):
             else:
                 self.logging = True
 
-
             events = os.listdir(self.events_dir)
             if not events:
                 time.sleep(1)
@@ -42,24 +41,23 @@ class UploadManager(Constants):
                 items = os.listdir(os.path.join(self.events_dir, event))
                 if items:
                     item = items[0]
-                    if self.send_image(event, item, width=640, height=480):
+                    temp_img_path = self.prepare_image(event, item, width=640, height=480)
+                    if not temp_img_path:
+                        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                                      '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
                         self.move_to_done(event, item)
-                    os.remove(os.path.join(self.temp_dir, item))
+                    elif self.send_image(event, item, temp_img_path):
+                        self.move_to_done(event, item)
+
+                    if temp_img_path:
+                        os.remove(os.path.join(self.temp_dir, item))
                 else:
                     shutil.rmtree(os.path.join(self.events_dir, event))
 
-    def send_image(self, event, item, width, height):
-        item_path = os.path.join(self.events_dir, event, item)
+    def send_image(self, event, item, temp_path):
         file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
-        im = cv2.imread(item_path)
-        short_txt, long_txt = self.get_copy_rights(file_dt)
-        im = ImageOperations.addFooter(im, short_txt, long_txt)
-        temp_item_path = os.path.join(self.temp_dir, item)
-        file, ext = os.path.splitext(temp_item_path)
-        im_resize = cv2.resize(im, (width, height))
-        cv2.imwrite(file + '.jpg', im_resize,  [cv2.IMWRITE_JPEG_QUALITY, 90])
-        payload = {'uuid': event, 'date': time.strftime("%Y-%m-%d", time.localtime())}
-        files = [('file', (item, open(temp_item_path, 'rb'), 'image/jpg'))]
+        payload = {'uuid': event, 'date': str(file_dt)}
+        files = [('file', (item, open(temp_path, 'rb'), 'image/jpg'))]
         try:
             response = requests.request("POST", self.image_url, headers=self.headers_im, data=payload, files=files)
             if response.status_code in [201, 208]:
@@ -84,6 +82,21 @@ class UploadManager(Constants):
         long_txt = file_dt.strftime('%b %d, %Y     %H:%M:%S') + '     ' + self.name + '     ' + 'POWERED BY LUMS'
         shrt_txt = file_dt.strftime('%d.%m.%y  %H:%M') + '  ' + "".join(e[0] for e in self.name.split()) + '  LUMS'
         return shrt_txt, long_txt
+
+    def prepare_image(self, event, item, width, height):
+        item_path = os.path.join(self.events_dir, event, item)
+        file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
+        im = cv2.imread(item_path)
+        if im is None:
+            return None
+
+        short_txt, long_txt = self.get_copy_rights(file_dt)
+        im = ImageOperations.addFooter(im, short_txt, long_txt)
+        temp_item_path = os.path.join(self.temp_dir, item)
+        file, ext = os.path.splitext(temp_item_path)
+        im_resize = cv2.resize(im, (width, height))
+        cv2.imwrite(file + '.jpg', im_resize, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        return temp_item_path
 
 
 if __name__ == "__main__":
