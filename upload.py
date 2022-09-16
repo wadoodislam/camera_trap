@@ -2,10 +2,11 @@ import os
 import shutil
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import cv2
 import requests
+from Jetson import GPIO
 
 from utils import Constants
 from utils import ImageOperations
@@ -24,6 +25,9 @@ class UploadManager(Constants):
 
         logging.info(f'Checked Tables')
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Upload Started"'])
+        self.setup_sensors()
+        self.lastuse_4g_at = datetime.now()
+        self.is_4g_on = False
 
     def run(self):
         while True:
@@ -38,8 +42,17 @@ class UploadManager(Constants):
 
             events = os.listdir(self.events_dir)
             if not events:
+                if self.should_turn_4g_off() and self.is_4g_on:
+                    GPIO.output(self.pin_4g, GPIO.HIGH)
+                    logging.info("4g turned OFF")
+                    self.is_4g_on = False
                 time.sleep(1)
             else:
+                if not self.is_4g_on:
+                    GPIO.output(self.pin_4g, GPIO.LOW)
+                    logging.info("4g turned ON")
+                    self.is_4g_on = True
+
                 event = sorted(events, key=lambda e: os.stat(os.path.join(self.events_dir, e)).st_ctime, reverse=True)[0]
                 items = os.listdir(os.path.join(self.events_dir, event))
                 if items:
@@ -50,6 +63,7 @@ class UploadManager(Constants):
                                       '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
                         self.move_to_done(event, item)
                     elif self.send_image(event, item, temp_img_path):
+                        self.lastuse_4g_at = datetime.now()
                         self.move_to_done(event, item)
 
                     if temp_img_path:
@@ -103,6 +117,16 @@ class UploadManager(Constants):
         im_resize = cv2.resize(im, (width, height))
         cv2.imwrite(file + '.jpg', im_resize, [cv2.IMWRITE_JPEG_QUALITY, 90])
         return temp_item_path
+
+    def should_turn_4g_off(self):
+        rn = datetime.now()
+        future = self.lastuse_4g_at + timedelta(seconds=self.idol_4g_interval)
+        return rn > future
+
+    def setup_sensors(self):
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.pin_4g, GPIO.OUT, initial=GPIO.HIGH)
 
 
 if __name__ == "__main__":

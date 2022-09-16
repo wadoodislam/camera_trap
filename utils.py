@@ -304,6 +304,14 @@ class JSON:
         return self.ME['motion_2']
 
     @property
+    def idol_4g_interval(self):
+        return self.ME['idol_4g_interval']
+
+    @property
+    def pin_4g(self):
+        return self.ME['pin_4g']
+
+    @property
     def motion1(self):
         return self.ME['motion_1']
 
