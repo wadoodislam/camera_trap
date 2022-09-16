@@ -126,7 +126,7 @@ class UploadManager(Constants):
     def setup_sensors(self):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pin_4g, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(self.pin_4g, GPIO.OUT, initial=GPIO.LOW)
 
 
 if __name__ == "__main__":
