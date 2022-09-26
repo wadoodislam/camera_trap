@@ -54,6 +54,11 @@ class Capture(Constants):
                 logging.debug(f'Motion Detected and Capturing Started')
                 frames += self.capture(self.video_interval)
                 self.write_event(frames)
+                payload = {
+                    "remaining_storage": get_disk_usage(),
+                    'last_captured_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                }
+                requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload), timeout=10)
                 logging.debug(f'Event captured with contours {contours}')
                 self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"EVENT_CAPTURED"', '1',
                               f'"UUID: {self.event_id}, Contours: {contours}, PIR: {pir1 + pir2}"'])

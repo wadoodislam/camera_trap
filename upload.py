@@ -50,6 +50,12 @@ class UploadManager(Constants):
                                       '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
                         self.move_to_done(event, item)
                     elif self.send_image(event, item, temp_img_path):
+                        payload = {
+                            "remaining_storage": get_disk_usage(),
+                            'last_uploaded_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                        }
+                        requests.request("PATCH", self.me_url, headers=self.headers, data=json.dumps(payload),
+                                         timeout=10)
                         self.move_to_done(event, item)
 
                     if temp_img_path:
