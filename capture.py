@@ -73,14 +73,14 @@ class Capture(Constants):
     def capture(self, interval):
         frames = []
         for sec in range(interval):
+            for skip in range(self.frames_per_sec - 1):
+                _ = self.camera.read()
+
             ret_val, frame = self.camera.read()
             if not self.is_sunlight(datetime.now()):
                 frame = ImageOperations.convert_image_to_gray(frame)
 
             frames.append((str(current_milli_time()) + '.jpg', frame))
-
-            for skip in range(self.frames_per_sec - 1):
-                _ = self.camera.read()
 
         return frames
 
