@@ -13,6 +13,7 @@ class Monitor(Constants):
         super(Monitor, self).__init__()
         logging.info('Script Started')
         self.fetch_params()
+        self.download_roi_mask()
 
         with self.db:
             self.db.create_tables()
@@ -41,6 +42,14 @@ class Monitor(Constants):
         except Exception:
             logging.warn(f'Error while fetching ME.json')
             pass
+
+    def download_roi_mask(self):
+        if self.ME['roi_mask']:
+            response = requests.get(self.ME['roi_mask'])
+            open("roi_mask.png", "wb").write(response.content)
+            logging.info("Downloaded ROI mask")
+        else:
+            logging.info("ROI mask not available")
 
     def send_logs(self):
         with self.db:

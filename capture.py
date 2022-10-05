@@ -48,6 +48,8 @@ class Capture(Constants):
             self.infrared_switch(on=not self.is_sunlight(datetime.now()))
             logging.info('Polling for Motion')
             frames = self.capture(self.motion_interval)
+            if self.ME['roi_mask']:
+                frames = self.apply_roi_mask(frames)
             is_motion, contours = self.motion_detection(frames)
 
             if is_motion:
@@ -103,6 +105,15 @@ class Capture(Constants):
                 return True, max_contour
 
         return False, max_contours
+
+    def apply_roi_mask(self, frames):
+        masked_frames = []
+        mask = cv2.imread('roi_mask.png')
+        mask_gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        for _, frame in frames:
+            masked = cv2.bitwise_and(frame, frame, mask=mask_gray)
+            frames.append((_, masked))
+        return masked_frames
 
     def write_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
