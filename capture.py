@@ -19,6 +19,7 @@ class Capture(Constants):
         super().__init__()
         logging.info('Script Started')
         self.read_params()
+        self.download_roi_mask()
         self.read_roi_mask()
 
         with self.db:
@@ -109,6 +110,14 @@ class Capture(Constants):
                 return True, max_contour
 
         return False, max_contours
+
+    def download_roi_mask(self):
+        if self.ME['roi_mask']:
+            response = requests.get(self.ME['roi_mask'])
+            open("roi_mask.png", "wb").write(response.content)
+            logging.info("Downloaded ROI mask")
+        else:
+            logging.info("ROI mask not available")
 
     def read_roi_mask(self):
         try:
