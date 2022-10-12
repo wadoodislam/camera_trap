@@ -90,14 +90,12 @@ class Capture(Constants):
     def motion_detection(self, frames):
         max_contours = []
         _, first_frame = frames[0]
-        if self.ME['roi_mask']:
-            first_frame = cv2.bitwise_and(first_frame, first_frame, mask=self.mask)
 
         for _, frame in frames:
-            if self.ME['roi_mask']:
-                frame = cv2.bitwise_and(frame, frame, mask=self.mask)
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
+            if self.ME['roi_mask']:
+                diff = cv2.bitwise_and(diff, diff, mask=self.mask)
             diff = cv2.erode(diff, None, iterations=1)
             diff = cv2.dilate(diff, None, iterations=3)
             cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -123,7 +121,7 @@ class Capture(Constants):
         try:
             self.mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
         except e:
-            logging.debug("Couldn't find/open roi_mask.png")
+            logging.info("Couldn't find/open roi_mask.png")
 
     def write_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
