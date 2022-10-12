@@ -13,12 +13,13 @@ from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperat
 class Capture(Constants):
     event_id = None
     table = 'capture_logs'
-    mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
+    mask = None
 
     def __init__(self):
         super().__init__()
         logging.info('Script Started')
         self.read_params()
+        self.read_roi_mask()
 
         with self.db:
             self.db.create_tables()
@@ -88,10 +89,12 @@ class Capture(Constants):
     def motion_detection(self, frames):
         max_contours = []
         _, first_frame = frames[0]
-        first_frame = cv2.bitwise_and(first_frame, first_frame, mask=self.mask)
+        if self.ME['roi_mask']:
+            first_frame = cv2.bitwise_and(first_frame, first_frame, mask=self.mask)
 
         for _, frame in frames:
-            frame = cv2.bitwise_and(frame, frame, mask=self.mask)
+            if self.ME['roi_mask']:
+                frame = cv2.bitwise_and(frame, frame, mask=self.mask)
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
             diff = cv2.erode(diff, None, iterations=1)
@@ -106,6 +109,12 @@ class Capture(Constants):
                 return True, max_contour
 
         return False, max_contours
+
+    def read_roi_mask(self):
+        try:
+            self.mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
+        except e:
+            logging.debug("Couldn't find/open roi_mask.png")
 
     def write_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
