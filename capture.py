@@ -3,6 +3,8 @@ import os
 import time
 from datetime import datetime
 from uuid import uuid4
+import requests
+
 
 import Jetson.GPIO as GPIO
 import cv2
