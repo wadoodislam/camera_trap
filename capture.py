@@ -122,8 +122,9 @@ class Capture(Constants):
     def read_roi_mask(self):
         try:
             self.mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
-        except e:
+        except Exception:
             logging.info("Couldn't find/open roi_mask.png")
+            pass
 
     def write_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
