@@ -3,6 +3,8 @@ import os
 import time
 from datetime import datetime
 from uuid import uuid4
+import requests
+
 
 import Jetson.GPIO as GPIO
 import cv2
@@ -13,11 +15,14 @@ from utils import gstreamer_pipeline, current_milli_time, Constants, ImageOperat
 class Capture(Constants):
     event_id = None
     table = 'capture_logs'
+    mask = None
 
     def __init__(self):
         super().__init__()
         logging.info('Script Started')
         self.read_params()
+        self.download_roi_mask()
+        self.read_roi_mask()
 
         with self.db:
             self.db.create_tables()
@@ -91,6 +96,8 @@ class Capture(Constants):
         for _, frame in frames:
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
+            if self.ME['roi_mask']:
+                diff = cv2.bitwise_and(diff, diff, mask=self.mask)
             diff = cv2.erode(diff, None, iterations=1)
             diff = cv2.dilate(diff, None, iterations=3)
             cnts, _ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -103,6 +110,21 @@ class Capture(Constants):
                 return True, max_contour
 
         return False, max_contours
+
+    def download_roi_mask(self):
+        if self.ME['roi_mask']:
+            response = requests.get(self.ME['roi_mask'])
+            open("roi_mask.png", "wb").write(response.content)
+            logging.info("Downloaded ROI mask")
+        else:
+            logging.info("ROI mask not available")
+
+    def read_roi_mask(self):
+        try:
+            self.mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
+        except Exception:
+            logging.info("Couldn't find/open roi_mask.png")
+            pass
 
     def write_event(self, frames):
         event_path = os.path.join(self.events_dir, self.event_id)
