@@ -110,5 +110,5 @@ if __name__ == "__main__":
         if contours.open_camera():
             contours.run()
             logging.error('Unable to open camera!')
-    finally:
+    except KeyboardInterrupt:
         contours.close_camera()
