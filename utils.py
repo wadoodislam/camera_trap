@@ -308,6 +308,10 @@ class JSON:
         return self.ME['idol_4g_interval']
 
     @property
+    def keep_4g_on(self):
+        return self.ME['keep_4g_on']
+
+    @property
     def pin_4g(self):
         return self.ME['pin_4g']
 
