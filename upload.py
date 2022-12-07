@@ -46,6 +46,10 @@ class UploadManager(Constants):
                     GPIO.output(self.pin_4g, GPIO.HIGH)
                     logging.info("4g turned OFF")
                     self.is_4g_on = False
+                if self.keep_4g_on and not self.is_4g_on:
+                    GPIO.output(self.pin_4g, GPIO.LOW)
+                    logging.info("4g turned ON")
+                    self.is_4g_on = True
                 time.sleep(1)
             else:
                 if not self.is_4g_on:
