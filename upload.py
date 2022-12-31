@@ -42,18 +42,11 @@ class UploadManager(Constants):
 
             events = os.listdir(self.events_dir)
             if not events:
-                # logging.info(str(self.should_turn_4g_off() and self.is_4g_on and not self.keep_4g_on))
-                logging.info(str(self.should_turn_4g_off()))
-                logging.info(str(self.is_4g_on))
-                logging.info(str(not self.keep_4g_on))
-                logging.info(str(self.lastuse_4g_at))
                 if self.should_turn_4g_off() and self.is_4g_on and not self.keep_4g_on:
                     GPIO.output(self.pin_4g, GPIO.HIGH)
-                    logging.info("4g turned OFF")
                     self.is_4g_on = False
                 if self.keep_4g_on and not self.is_4g_on:
                     GPIO.output(self.pin_4g, GPIO.LOW)
-                    logging.info("4g turned ON")
                     self.is_4g_on = True
                 time.sleep(1)
             else:
