@@ -1,6 +1,7 @@
 import logging
 import json
 from datetime import datetime, timedelta
+from Jetson import GPIO
 
 import requests
 
