@@ -13,7 +13,7 @@ class Monitor(Constants):
         super(Monitor, self).__init__()
         logging.info('Script Started')
         self.fetch_params()
-        self.read_params()
+        # self.read_params()
 
         with self.db:
             self.db.create_tables()
