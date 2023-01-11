@@ -96,7 +96,6 @@ class Capture(Constants):
         for _, frame in frames:
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
-            logging.info()
             if self.mask is not None:
                 diff = cv2.bitwise_and(diff, diff, mask=self.mask)
             diff = cv2.erode(diff, None, iterations=1)
