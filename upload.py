@@ -27,7 +27,7 @@ class UploadManager(Constants):
         logging.info(f'Checked Tables')
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Upload Started"'])
         self.setup_sensors()
-        GPIO.output(self.pin_4g, GPIO.LOW)
+        GPIO.output(self.pin, GPIO.LOW)
         logging.info("4g turned ON")
         self.lastuse_4g_at = datetime.now()
         self.is_4g_on = True
@@ -49,13 +49,13 @@ class UploadManager(Constants):
                 logging.info(str(self.is_4g_on))
                 logging.info(str(self.lastuse_4g_at))
                 if self.should_turn_4g_off() and self.is_4g_on:
-                    GPIO.output(self.pin_4g, GPIO.HIGH)
+                    GPIO.output(self.pin, GPIO.HIGH)
                     logging.info("4g turned OFF")
                     self.is_4g_on = False
                 time.sleep(1)
             else:
                 if not self.is_4g_on:
-                    GPIO.output(self.pin_4g, GPIO.LOW)
+                    GPIO.output(self.pin, GPIO.LOW)
                     logging.info("4g turned ON")
                     self.is_4g_on = True
 
@@ -127,11 +127,6 @@ class UploadManager(Constants):
         rn = datetime.now()
         future = self.lastuse_4g_at + timedelta(seconds=self.idol_4g_interval)
         return rn > future
-
-    def setup_sensors(self):
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pin_4g, GPIO.OUT, initial=GPIO.LOW)
 
 
 if __name__ == "__main__":

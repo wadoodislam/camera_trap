@@ -329,6 +329,7 @@ class JSON:
 
 
 class Constants(JSON):
+    pin = 36
     data_root = 'data_root'
     data_dir = os.getcwd() + '/' + data_root
     events_dir = data_dir + '/events/'
@@ -380,6 +381,11 @@ class Constants(JSON):
         if self.should_log:
             with self.db:
                 self.db.data_entry(self.table, values)
+
+    def setup_sensors(self):
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.pin, GPIO.OUT)
 
     def read_params(self):
         try:

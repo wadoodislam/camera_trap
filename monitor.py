@@ -13,7 +13,8 @@ class Monitor(Constants):
     def __init__(self):
         super(Monitor, self).__init__()
         logging.info('Script Started')
-        GPIO.output(36, GPIO.LOW)
+        self.setup_sensors()
+        GPIO.output(self.pin, GPIO.LOW)
         logging.info("4g turned ON")
         self.fetch_params()
         self.read_params()
