@@ -13,6 +13,7 @@ class Monitor(Constants):
         super(Monitor, self).__init__()
         logging.info('Script Started')
         self.fetch_params()
+        self.read_params()
 
         with self.db:
             self.db.create_tables()
@@ -24,6 +25,14 @@ class Monitor(Constants):
             if self.params_expired:
                 self.fetch_params()
                 self.send_logs()
+
+    def read_params(self):
+        try:
+            with open(self.data_dir + '/ME.json', 'r') as file:
+                self.ME = json.loads(file.read())
+            logging.debug("ME.json loaded.")
+        except IOError as e:
+            logging.debug("Couldn't find/open ME.json file.")
 
     def fetch_params(self):
         try:
