@@ -4,6 +4,7 @@ import math
 import os
 import time
 from datetime import datetime, timedelta
+from Jetson import GPIO
 
 import cv2
 import numpy as np
