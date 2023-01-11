@@ -24,7 +24,7 @@ class Monitor(Constants):
         while True:
             if self.params_expired:
                 self.fetch_params()
-                self.send_logs()
+                # self.send_logs()
 
     def read_params(self):
         try:
