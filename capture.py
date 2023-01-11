@@ -5,7 +5,6 @@ from datetime import datetime
 from uuid import uuid4
 import requests
 
-
 import Jetson.GPIO as GPIO
 import cv2
 
@@ -29,7 +28,8 @@ class Capture(Constants):
 
         logging.info(f'Checked Tables')
 
-        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
+        self.put_log(
+            [f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
         self.setup_sensors()
 
     def run(self):
@@ -96,7 +96,8 @@ class Capture(Constants):
         for _, frame in frames:
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
-            if self.mask:
+            logging.info()
+            if self.mask is not None:
                 diff = cv2.bitwise_and(diff, diff, mask=self.mask)
             diff = cv2.erode(diff, None, iterations=1)
             diff = cv2.dilate(diff, None, iterations=3)
