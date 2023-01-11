@@ -5,7 +5,6 @@ from datetime import datetime
 from uuid import uuid4
 import requests
 
-
 import Jetson.GPIO as GPIO
 import cv2
 
@@ -29,7 +28,8 @@ class Capture(Constants):
 
         logging.info(f'Checked Tables')
 
-        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
+        self.put_log(
+            [f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"', '"SCRIPT_STARTED"', '1', f'"Capture Started"'])
         self.setup_sensors()
 
     def run(self):
@@ -96,7 +96,7 @@ class Capture(Constants):
         for _, frame in frames:
             diff = ImageOperations.error_image_gray_histmatch(first_frame, frame)
             diff = ImageOperations.convert_to_binary(diff)
-            if self.ME['roi_mask']:
+            if self.mask is not None:
                 diff = cv2.bitwise_and(diff, diff, mask=self.mask)
             diff = cv2.erode(diff, None, iterations=1)
             diff = cv2.dilate(diff, None, iterations=3)
@@ -113,9 +113,14 @@ class Capture(Constants):
 
     def download_roi_mask(self):
         if self.ME['roi_mask']:
-            response = requests.get(self.ME['roi_mask'])
-            open("roi_mask.png", "wb").write(response.content)
-            logging.info("Downloaded ROI mask")
+            try:
+                response = requests.get(self.ME['roi_mask'])
+            except Exception:
+                logging.warn(f'Error while fetching roi_mask')
+                pass
+            else:
+                open("roi_mask.png", "wb").write(response.content)
+                logging.info("Downloaded ROI mask")
         else:
             logging.info("ROI mask not available")
 
@@ -124,6 +129,7 @@ class Capture(Constants):
             self.mask = cv2.cvtColor(cv2.imread('roi_mask.png'), cv2.COLOR_BGR2GRAY)
         except Exception:
             logging.info("Couldn't find/open roi_mask.png")
+            self.mask = None
             pass
 
     def write_event(self, frames):
