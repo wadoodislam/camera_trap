@@ -69,7 +69,7 @@ class UploadManager(Constants):
                 logging.info(f'Successfully Uploaded Image At: {file_dt}')
                 return True
         except Exception as e:
-            logging.info(f'Successfully Uploaded Image At: {file_dt}')
+            logging.info(f'Could not upload image: {file_dt}')
             pass
 
         self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
