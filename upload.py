@@ -58,35 +58,34 @@ class UploadManager(Constants):
                     self.is_4g_on = False
                 time.sleep(1)
             else:
-                if not self.should_retry():
+                if self.should_retry():
+                    if self.retry_request_timer is not None:
+                        self.retry_request_timer = None
+                    if not self.is_4g_on:
+                        GPIO.output(self.pin, GPIO.LOW)
+                        logging.info("4g turned ON; event detected")
+                        self.is_4g_on = True
+                    event = sorted(events, key=lambda e: os.stat(os.path.join(self.events_dir, e)).st_ctime, reverse=True)[0]
+                    items = os.listdir(os.path.join(self.events_dir, event))
+                    if items:
+                        item = items[0]
+                        temp_img_path = self.prepare_image(event, item, width=640, height=480)
+                        if not temp_img_path:
+                            self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
+                                          '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
+                            self.move_to_done(event, item)
+                        elif self.send_image(event, item, temp_img_path):
+                            self.move_to_done(event, item)
+                        self.lastuse_4g_at = datetime.now()
+                        if temp_img_path:
+                            os.remove(os.path.join(self.temp_dir, item))
+                    else:
+                        shutil.rmtree(os.path.join(self.events_dir, event))
+                else:
                     if self.is_4g_on:
                         GPIO.output(self.pin, GPIO.HIGH)
                         logging.info("4g turned OFF for 15 minutes; event upload unsuccessful")
                         self.is_4g_on = False
-                    continue
-                if self.should_retry():
-                    if self.retry_request_timer is not None:
-                        self.retry_request_timer = None
-                if not self.is_4g_on:
-                    GPIO.output(self.pin, GPIO.LOW)
-                    logging.info("4g turned ON; event detected")
-                    self.is_4g_on = True
-                event = sorted(events, key=lambda e: os.stat(os.path.join(self.events_dir, e)).st_ctime, reverse=True)[0]
-                items = os.listdir(os.path.join(self.events_dir, event))
-                if items:
-                    item = items[0]
-                    temp_img_path = self.prepare_image(event, item, width=640, height=480)
-                    if not temp_img_path:
-                        self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
-                                      '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
-                        self.move_to_done(event, item)
-                    elif self.send_image(event, item, temp_img_path):
-                        self.move_to_done(event, item)
-                    self.lastuse_4g_at = datetime.now()
-                    if temp_img_path:
-                        os.remove(os.path.join(self.temp_dir, item))
-                else:
-                    shutil.rmtree(os.path.join(self.events_dir, event))
 
     def send_image(self, event, item, temp_path):
         file_dt = datetime.fromtimestamp(float(item[:-4]) / 1000)
@@ -146,7 +145,7 @@ class UploadManager(Constants):
 
     def should_retry(self):
         if self.retry_request_timer is None:
-            return False
+            return True
         return datetime.now() > self.retry_request_timer + timedelta(seconds=900)
 
     def should_turn_4g_off(self):
