@@ -146,8 +146,8 @@ class UploadManager(Constants):
 
     def should_retry(self):
         if self.retry_request_timer is None:
-            return True
-        return datetime.now() > self.bad_request_timer + timedelta(seconds=900)
+            return False
+        return datetime.now() > self.retry_request_timer + timedelta(seconds=900)
 
     def should_turn_4g_off(self):
         rn = datetime.now()
