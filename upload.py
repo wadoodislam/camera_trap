@@ -44,6 +44,7 @@ class UploadManager(Constants):
                     self.logging = False
             else:
                 self.logging = True
+            logging.info(str(self.bad_request_timer))
             if self.should_stop_requesting():
                 logging.info("Connection failed to establish for 5 minutes")
                 self.retry_request_timer = datetime.now()
@@ -59,7 +60,6 @@ class UploadManager(Constants):
                     self.is_4g_on = False
                 time.sleep(1)
             else:
-                logging.info(str(self.should_retry()))
                 if self.should_retry():
                     if self.retry_request_timer is not None:
                         self.retry_request_timer = None
@@ -76,7 +76,6 @@ class UploadManager(Constants):
                             self.put_log([f'"{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}"',
                                           '"UPLOAD_FAILED"', '1', f'"Corrupted image found! UUID: {event}"'])
                             self.move_to_done(event, item)
-                            logging.info("ready to send image?" + str(self.is_4g_on))
                         elif self.send_image(event, item, temp_img_path):
                             self.move_to_done(event, item)
                         self.lastuse_4g_at = datetime.now()
