@@ -85,6 +85,7 @@ class UploadManager(Constants):
                     else:
                         shutil.rmtree(os.path.join(self.events_dir, event))
                 else:
+                    logging.info("not trying for upload anymore")
                     if self.is_4g_on:
                         GPIO.output(self.pin, GPIO.HIGH)
                         logging.info("4g turned OFF for 15 minutes; event upload unsuccessful")
