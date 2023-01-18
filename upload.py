@@ -59,7 +59,7 @@ class UploadManager(Constants):
                     self.is_4g_on = False
                 time.sleep(1)
             else:
-                logging.info(str(should_retry()))
+                logging.info(str(self.should_retry()))
                 if self.should_retry():
                     if self.retry_request_timer is not None:
                         self.retry_request_timer = None
