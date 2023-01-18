@@ -69,6 +69,9 @@ class UploadManager(Constants):
                         self.is_4g_on = True
                     event = sorted(events, key=lambda e: os.stat(os.path.join(self.events_dir, e)).st_ctime, reverse=True)[0]
                     items = os.listdir(os.path.join(self.events_dir, event))
+                    GPIO.output(self.pin, GPIO.LOW)
+                    logging.info("4g turned ON a second time")
+                    self.is_4g_on = True
                     if items:
                         item = items[0]
                         temp_img_path = self.prepare_image(event, item, width=640, height=480)
